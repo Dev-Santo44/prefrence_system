@@ -1,0 +1,367 @@
+{% extends "preference_app/base.html" %}
+{% load static %}
+
+{% block title %}My Profile — PreferenceAI{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<div class="container" style="margin-top: 40px;">
+  <!-- Header -->
+  <div style="text-align: center; margin-bottom: 48px;" data-animate class="visible">
+    <h1 style="margin-bottom: 16px;">Style <span class="gradient-text">Insights</span></h1>
+    <p>Discover the AI analysis of your unique jewelry persona.</p>
+  </div>
+
+  <div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar visible" data-animate>
+      <div class="sidebar-nav">
+        <div class="sidebar-item active" id="nav-analysis" onclick="switchModule('analysis')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+          <span>Analysis</span>
+        </div>
+        <div class="sidebar-item" id="nav-tryon" onclick="switchModule('tryon')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span>Virtual Try-On</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="dashboard-content">
+      <!-- Analysis Module -->
+      <div id="module-analysis" class="module-content active">
+        <div class="grid grid-2" style="gap: 24px;">
+          <!-- Radar Chart -->
+          <div class="glass-panel visible" data-animate style="padding: 32px; grid-column: span 2; text-align: center; transition-delay: 0.1s;">
+            <h3 style="margin-bottom: 32px; color: var(--text-gray); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700;">Dimension Overview</h3>
+            <div style="max-width: 450px; margin: 0 auto; min-height: 350px;">
+              <canvas id="ocean-radar"></canvas>
+            </div>
+          </div>
+
+          <!-- Trait Detail Grid -->
+          <div class="glass-panel visible" data-animate style="padding: 24px; transition-delay: 0.2s;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+              <h4 style="color: #818cf8;">✨ Style</h4>
+              <span style="font-size: 1.5rem; font-weight: 800; color: #818cf8;">{{ result.style_score|floatformat:0 }}</span>
+            </div>
+            <div class="progress-bar-outer" style="height: 6px; margin-bottom: 16px;">
+              <div class="progress-bar-inner" style="width:{{ result.style_score|floatformat:0 }}%; background: #818cf8;"></div>
+            </div>
+            <p id="d-style" style="font-size: 0.85rem; color: var(--text-gray); line-height: 1.6;"></p>
+          </div>
+
+          <div class="glass-panel visible" data-animate style="padding: 24px; transition-delay: 0.3s;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+              <h4 style="color: #34d399;">💎 Material</h4>
+              <span style="font-size: 1.5rem; font-weight: 800; color: #34d399;">{{ result.material_score|floatformat:0 }}</span>
+            </div>
+            <div class="progress-bar-outer" style="height: 6px; margin-bottom: 16px;">
+              <div class="progress-bar-inner" style="width:{{ result.material_score|floatformat:0 }}%; background: #34d399;"></div>
+            </div>
+            <p id="d-material" style="font-size: 0.85rem; color: var(--text-gray); line-height: 1.6;"></p>
+          </div>
+
+          <div class="glass-panel visible" data-animate style="padding: 24px; transition-delay: 0.4s;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+              <h4 style="color: #fbbf24;">🎉 Occasion</h4>
+              <span style="font-size: 1.5rem; font-weight: 800; color: #fbbf24;">{{ result.occasion_score|floatformat:0 }}</span>
+            </div>
+            <div class="progress-bar-outer" style="height: 6px; margin-bottom: 16px;">
+              <div class="progress-bar-inner" style="width:{{ result.occasion_score|floatformat:0 }}%; background: #fbbf24;"></div>
+            </div>
+            <p id="d-occasion" style="font-size: 0.85rem; color: var(--text-gray); line-height: 1.6;"></p>
+          </div>
+
+          <div class="glass-panel visible" data-animate style="padding: 24px; transition-delay: 0.5s;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+              <h4 style="color: #f472b6;">🎨 Aesthetic</h4>
+              <span style="font-size: 1.5rem; font-weight: 800; color: #f472b6;">{{ result.aesthetic_score|floatformat:0 }}</span>
+            </div>
+            <div class="progress-bar-outer" style="height: 6px; margin-bottom: 16px;">
+              <div class="progress-bar-inner" style="width:{{ result.aesthetic_score|floatformat:0 }}%; background: #f472b6;"></div>
+            </div>
+            <p id="d-aesthetic" style="font-size: 0.85rem; color: var(--text-gray); line-height: 1.6;"></p>
+          </div>
+
+          <!-- Recommendations Section -->
+          <div class="glass-panel visible" data-animate style="grid-column: span 2; padding: 40px; margin-top: 20px; transition-delay: 0.6s;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+              <div style="width: 48px; height: 48px; background: rgba(125, 211, 252, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent-primary);">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 8v4l3 3"/></svg>
+              </div>
+              <div>
+                  <h3 style="font-size: 1.25rem;">AI Recommendation</h3>
+                  <p style="font-size: 0.85rem; color: var(--text-gray);">Curated specifically for your profile</p>
+              </div>
+            </div>
+            <div style="padding: 24px; background: rgba(0,0,0,0.2); border-left: 4px solid var(--accent-primary); border-radius: 0 var(--radius-md) var(--radius-md) 0; font-size: 1.05rem; line-height: 1.8; color: var(--text-primary); font-style: italic;">
+              {{ result.recommendations }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="visible" style="margin-top: 60px; display: flex; justify-content: center; gap: 16px; padding-bottom: 80px; transition-delay: 0.7s;" data-animate>
+          <a href="{% url 'survey' %}" class="btn btn-outline" style="width: 200px;">Retake Assessment</a>
+          <button class="btn btn-primary" onclick="window.print()" style="width: 200px;">Download Report</button>
+        </div>
+      </div>
+
+      <!-- Try-On Module -->
+      <div id="module-tryon" class="module-content">
+        <div class="grid grid-2" style="gap: 24px;">
+          <!-- Upload Section -->
+          <div class="glass-panel" style="padding: 32px;">
+            <h3 style="margin-bottom: 24px; color: var(--accent-primary);">1. Upload Your Photo</h3>
+            <div id="drop-zone" class="tryon-upload-zone" onclick="document.getElementById('tryon-input').click()">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              <p>Click or drag your photo here</p>
+              <span style="font-size: 0.8rem; color: var(--text-gray);">Clear face or wrist photo recommended</span>
+              <input type="file" id="tryon-input" style="display: none;" accept="image/*" onchange="previewUpload(this)">
+            </div>
+            <div id="upload-preview" style="display: none; margin-top: 20px;">
+              <img id="preview-img" style="width: 100%; border-radius: var(--radius-md);">
+              <button class="btn btn-outline" style="width: 100%; margin-top: 10px;" onclick="resetUpload()">Change Photo</button>
+            </div>
+          </div>
+
+          <!-- Selection Section -->
+          <div class="glass-panel" style="padding: 32px;">
+            <h3 style="margin-bottom: 24px; color: var(--accent-primary);">2. Select Jewelry</h3>
+            <div class="tryon-gallery">
+              <div class="tryon-item active" onclick="selectJewelry(1, 'Necklace', this)">
+                <img src="{% static 'preference_app/tryon_assets/1.png' %}" alt="Necklace">
+                <span>Gold Necklace</span>
+              </div>
+              <div class="tryon-item" onclick="selectJewelry(2, 'Earrings', this)">
+                <img src="{% static 'preference_app/tryon_assets/2.png' %}" alt="Earrings">
+                <span>Diamond Drops</span>
+              </div>
+              <div class="tryon-item" onclick="selectJewelry(3, 'Bangle', this)">
+                <img src="{% static 'preference_app/tryon_assets/3.png' %}" alt="Bangle">
+                <span>Gold Bangle</span>
+              </div>
+            </div>
+            
+            <button id="tryon-btn" class="btn btn-primary" style="width: 100%; margin-top: 32px;" onclick="startTryOn()" disabled>
+              Launch Virtual Try-On
+            </button>
+          </div>
+        </div>
+
+        <!-- Result Section -->
+        <div id="tryon-result-card" class="glass-panel" style="margin-top: 32px; padding: 40px; display: none;">
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <h2 style="margin-bottom: 24px;">Your <span class="gradient-text">Virtual Preview</span></h2>
+            <div id="result-container" style="position: relative; max-width: 600px; width: 100%;">
+              <img id="result-img" style="width: 100%; border-radius: var(--radius-md); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+              <div id="tryon-loader" class="tryon-loader" style="display: none;">
+                <div class="spinner"></div>
+                <p>AI analyzing landmarks...</p>
+              </div>
+            </div>
+            <div style="margin-top: 32px; display: flex; gap: 16px;">
+              <button class="btn btn-outline" onclick="downloadResult()" style="width: 200px;">Download Preview</button>
+              <button class="btn btn-primary" onclick="resetTryOn()" style="width: 200px;">Try Another Item</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+
+// --- Core Logic ---
+function switchModule(moduleName) {
+  console.log("Switching to module:", moduleName);
+  document.querySelectorAll('.module-content').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  
+  const targetModule = document.getElementById('module-' + moduleName);
+  const targetNav = document.getElementById('nav-' + moduleName);
+  
+  if (targetModule) targetModule.classList.add('active');
+  if (targetNav) targetNav.classList.add('active');
+}
+
+// AR Try-On Logic
+let selectedJewelryId = 1;
+let selectedJewelryType = 'Necklace';
+let selectedFile = null;
+
+function previewUpload(input) {
+  if (input.files && input.files[0]) {
+    selectedFile = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('preview-img').src = e.target.result;
+      document.getElementById('drop-zone').style.display = 'none';
+      document.getElementById('upload-preview').style.display = 'block';
+      checkReady();
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function resetUpload() {
+  selectedFile = null;
+  document.getElementById('tryon-input').value = '';
+  document.getElementById('drop-zone').style.display = 'flex';
+  document.getElementById('upload-preview').style.display = 'none';
+  checkReady();
+}
+
+function selectJewelry(id, type, element) {
+  selectedJewelryId = id;
+  selectedJewelryType = type;
+  document.querySelectorAll('.tryon-item').forEach(item => item.classList.remove('active'));
+  element.classList.add('active');
+  checkReady();
+}
+
+function checkReady() {
+  document.getElementById('tryon-btn').disabled = !selectedFile;
+}
+
+async function startTryOn() {
+  console.log("Launching Try-On for item:", selectedJewelryId);
+  const formData = new FormData();
+  formData.append('photo', selectedFile);
+  formData.append('item_id', selectedJewelryId);
+  formData.append('item_type', selectedJewelryType);
+
+  const loader = document.getElementById('tryon-loader');
+  const resultCard = document.getElementById('tryon-result-card');
+  const resultImg = document.getElementById('result-img');
+
+  loader.style.display = 'flex';
+  resultCard.style.display = 'block';
+  resultCard.scrollIntoView({ behavior: 'smooth' });
+
+  try {
+    const response = await fetch('/tryon/process/', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: formData
+    });
+    
+    const data = await response.json();
+    loader.style.display = 'none';
+
+    if (data.result_url) {
+      resultImg.src = data.result_url;
+    } else {
+      alert(data.error || "Processing failed");
+    }
+  } catch (e) {
+    loader.style.display = 'none';
+    alert("Error connecting to server");
+  }
+}
+
+function resetTryOn() {
+  document.getElementById('tryon-result-card').style.display = 'none';
+  resetUpload();
+}
+
+function downloadResult() {
+  const link = document.createElement('a');
+  link.href = document.getElementById('result-img').src;
+  link.download = 'tryon_preview.jpg';
+  link.click();
+}
+
+// --- Data & Charts ---
+let R = {};
+try {
+  R = JSON.parse('{{ result_json|escapejs }}');
+  console.log("Preference Data Loaded:", R);
+} catch (e) {
+  console.error("Error parsing preference data:", e);
+}
+
+const TRAIT_DESCS = {
+  style:         { high:"You prefer bold, statement-making styles over minimalist pieces.", low:"You lean towards subtle, elegant, and minimalist designs." },
+  material:      { high:"High-quality, precious materials are essential to you.",         low:"You value design over material and are open to alternative alloys." },
+  occasion:      { high:"Your jewelry is matched to specific, often upscale events.",   low:"You prioritize everyday wearability and versatile pieces." },
+  aesthetic:     { high:"You have a distinct, strongly defined aesthetic (like boho or vintage).",     low:"Your aesthetic choices are broad and adaptable." },
+  budget:        { high:"You are willing to invest significantly in high-end or custom jewelry.",  low:"You prefer affordable, value-driven jewelry choices." },
+};
+
+['style','material','occasion','aesthetic','budget'].forEach(t => {
+  const val = R[t] || 0;
+  const el = document.getElementById('d-' + t);
+  if(el) {
+      el.textContent = val >= 50 ? TRAIT_DESCS[t].high : TRAIT_DESCS[t].low;
+  }
+});
+
+// Radar Chart
+const radarEl = document.getElementById('ocean-radar');
+if (radarEl && typeof Chart !== 'undefined') {
+  const ctx = radarEl.getContext('2d');
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Style','Material','Occasion','Aesthetic','Budget'],
+      datasets: [{
+        label: 'Your Persona',
+        data: [R.style, R.material, R.occasion, R.aesthetic, R.budget],
+        backgroundColor:    'rgba(99, 102, 241, 0.2)',
+        borderColor:        '#818cf8',
+        pointBackgroundColor: ['#818cf8','#34d399','#fbbf24','#f472b6','#f87171'],
+        pointBorderColor: '#fff',
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        borderWidth: 3,
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          beginAtZero: true,
+          ticks: { display: false },
+          grid: { color: 'rgba(255, 255, 255, 0.1)' },
+          angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+          pointLabels: {
+            color: 'rgba(255, 255, 255, 0.7)',
+            font: { size: 12, family: 'Outfit', weight: '600' }
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(15, 15, 15, 0.95)',
+          titleColor: '#fff',
+          bodyColor: '#ccc',
+          padding: 12,
+          borderRadius: 8,
+          displayColors: false
+        }
+      }
+    }
+  });
+} else {
+  console.warn("Chart.js not loaded or element missing.");
+}
+</script>
+{% endblock %}

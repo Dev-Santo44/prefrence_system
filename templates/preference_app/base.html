@@ -1,0 +1,166 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}AI Preference Identifier{% endblock %}</title>
+  <meta name="description" content="{% block description %}AI-Driven Personal Preference Identifier powered by the OCEAN personality model.{% endblock %}" />
+  <link rel="stylesheet" href="{% static 'preference_app/style.css' %}" />
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<!-- Global Navigation -->
+<nav class="nav-container">
+  <div class="nav-content">
+    <a class="logo" href="{% url 'index' %}">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span>PreferenceAI</span>
+    </a>
+    <div style="display: flex; align-items: center; gap: 24px;">
+      <a href="{% url 'index' %}" class="nav-link mobile-hide {% if request.path == '/' %}active{% endif %}">Home</a>
+      <a href="{% url 'about' %}" class="nav-link mobile-hide {% if request.path == '/about/' %}active{% endif %}">About</a>
+      <a href="{% url 'contact' %}" class="nav-link mobile-hide {% if request.path == '/contact/' %}active{% endif %}">Contact</a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'dashboard' %}" class="nav-link {% if '/dashboard/' in request.path %}active{% endif %}">Dashboard</a>
+        <a href="{% url 'survey' %}" class="btn btn-outline" style="padding: 8px 16px; font-size: 0.85rem;">Survey</a>
+        <a href="{% url 'logout' %}" class="btn btn-outline" style="padding: 8px 16px; font-size: 0.85rem;">Logout</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  {% block content %}{% endblock %}
+</div>
+
+{% block extra_scripts %}{% endblock %}
+
+  <!-- Chatbot Widget -->
+  {% if user.is_authenticated %}
+  <div class="chat-trigger" id="chat-trigger" title="Jewelry Advisor">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  </div>
+
+  <div class="chat-window" id="chat-window">
+    <div class="chat-header">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%;"></div>
+        <span style="font-weight: 600; font-size: 0.95rem;">Jewelry Advisor</span>
+      </div>
+      <button onclick="toggleChat()" style="background:none; border:none; color:white; cursor:pointer;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="chat-history" id="chat-history">
+      <div class="message-bubble message-bot">
+        Hello {{ user.name }}! ✨ I'm your AI Jewelry Advisor. How can I help you sparkle today?
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <input type="text" class="chat-input" id="chat-input" placeholder="Type your message..." onkeypress="handleChatKey(event)">
+      <button onclick="sendMessage()" class="btn btn-primary" style="padding: 10px; border-radius: 50%; width: 40px; height: 40px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let currentSessionId = localStorage.getItem('chat_session_id') || null;
+
+    function toggleChat() {
+      document.getElementById('chat-window').classList.toggle('active');
+      if(document.getElementById('chat-window').classList.contains('active')) {
+          scrollToBottom();
+      }
+    }
+
+    document.getElementById('chat-trigger').onclick = toggleChat;
+
+    function scrollToBottom() {
+      const history = document.getElementById('chat-history');
+      history.scrollTop = history.scrollHeight;
+    }
+
+    function handleChatKey(e) {
+      if (e.key === 'Enter') sendMessage();
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('chat-input');
+      const message = input.value.trim();
+      if (!message) return;
+
+      input.value = '';
+      appendMessage('user', message);
+      
+      // Show typing indicator
+      const typingId = 'typing-' + Date.now();
+      const history = document.getElementById('chat-history');
+      const typingDiv = document.createElement('div');
+      typingDiv.id = typingId;
+      typingDiv.className = 'message-bubble message-bot typing';
+      typingDiv.innerHTML = '<span></span><span></span><span></span>';
+      history.appendChild(typingDiv);
+      scrollToBottom();
+
+      try {
+        const response = await fetch('/chat/message/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({ message: message, session_id: currentSessionId })
+        });
+        
+        const data = await response.json();
+        document.getElementById(typingId).remove();
+
+        if (data.reply) {
+          if (data.session_id) {
+              currentSessionId = data.session_id;
+              localStorage.setItem('chat_session_id', currentSessionId);
+          }
+          appendMessage('bot', data.reply, data.recommendations);
+        }
+      } catch (e) {
+        document.getElementById(typingId).remove();
+        appendMessage('bot', "I'm sorry, I'm having trouble connecting right now.");
+      }
+    }
+
+    function appendMessage(role, text, recs = []) {
+      const history = document.getElementById('chat-history');
+      const div = document.createElement('div');
+      div.className = `message-bubble message-${role}`;
+      div.innerText = text;
+      history.appendChild(div);
+
+      if (recs && recs.length > 0) {
+        const recContainer = document.createElement('div');
+        recContainer.style.marginTop = '15px';
+        recs.forEach(item => {
+          const card = `
+            <div class="chat-card">
+              <img src="${item.image}" style="width:100%; height:120px; object-fit:cover;">
+              <div style="padding:10px;">
+                <div style="font-size:0.8rem; font-weight:700; color:white;">${item.name}</div>
+                <div style="font-size:0.75rem; color:#818cf8;">₹${item.price}</div>
+                <a href="${item.link}" target="_blank" class="btn btn-primary" style="padding:4px 8px; font-size:0.7rem; margin-top:8px; display:inline-block; width:100%; text-align:center;">View Item</a>
+              </div>
+            </div>`;
+          recContainer.innerHTML += card;
+        });
+        history.appendChild(recContainer);
+      }
+      scrollToBottom();
+    }
+  </script>
+  {% endif %}
+</body>
+</html>

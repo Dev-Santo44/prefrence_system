@@ -1,0 +1,198 @@
+{% extends "preference_app/base.html" %}
+{% load static %}
+
+{% block title %}Survey — AI Preference Identifier{% endblock %}
+
+{% block content %}
+
+<div class="container" style="max-width: 800px; margin-top: 40px;">
+  <!-- Header -->
+  <div class="visible" style="text-align: center; margin-bottom: 48px;" data-animate>
+    <h1 style="margin-bottom: 16px;">Style <span class="gradient-text">Assesment</span></h1>
+    <p>Complete the survey to calibrate your unique jewelry persona.</p>
+  </div>
+
+  <!-- Progress -->
+  <div class="glass-panel visible" style="padding: 24px; margin-bottom: 32px; transition-delay: 0.1s;" data-animate>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.85rem; font-weight: 600;">
+      <span style="color: var(--accent-primary);">STEP <span id="q-current">1</span> / <span id="q-total">25</span></span>
+      <span id="progress-pct" style="color: var(--text-gray);">0% COMPLETE</span>
+    </div>
+    <div class="progress-bar-outer" style="height: 6px;">
+        <div class="progress-bar-inner" id="progress-bar" style="width: 4%"></div>
+    </div>
+  </div>
+
+  <!-- Alert -->
+  <div id="survey-alert" style="display: none; margin-bottom: 24px; padding: 12px; background: rgba(248,113,113,0.1); border-radius: var(--radius-sm); color: var(--danger); text-align: center;"></div>
+  <div id="survey-success" style="display: none; margin-bottom: 24px; padding: 12px; background: rgba(52,211,153,0.1); border-radius: var(--radius-sm); color: var(--success); text-align: center;"></div>
+
+  <!-- Question Card -->
+  <div class="glass-panel active-card visible" id="question-card" style="padding: 40px; margin-bottom: 32px; transition-delay: 0.2s;" data-animate>
+    <div id="q-label" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; color: var(--accent-secondary); margin-bottom: 16px;">QUESTION 1 · LOADING</div>
+    <h3 id="q-text" style="font-size: 1.5rem; line-height: 1.4; margin-bottom: 40px;">Loading question text...</h3>
+    
+    <div class="likert-container" id="likert-group">
+      <div class="likert-option" data-val="1">1</div>
+      <div class="likert-option" data-val="2">2</div>
+      <div class="likert-option" data-val="3">3</div>
+      <div class="likert-option" data-val="4">4</div>
+      <div class="likert-option" data-val="5">5</div>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-top: 20px; font-size: 0.75rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase;">
+        <span>Strongly Disagree</span>
+        <span>Neutral</span>
+        <span>Strongly Agree</span>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="visible" style="display: flex; justify-content: space-between; align-items: center; transition-delay: 0.3s;" data-animate>
+    <button class="btn btn-outline" id="btn-prev" disabled>← Previous</button>
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 600; color: var(--text-gray);" class="mobile-hide">
+        <span id="trait-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-primary);"></span>
+        <span id="trait-label" style="text-transform: uppercase; letter-spacing: 0.05em;">STYLE</span>
+    </div>
+    <button class="btn btn-primary" id="btn-next">Next Question →</button>
+  </div>
+
+  <!-- Submit Section -->
+  <div id="submit-section" class="glass-panel visible" style="margin-top: 48px; display: none; padding: 40px; text-align: center;" data-animate>
+    <h2 style="margin-bottom: 12px;">Final Step 🎉</h2>
+    <p style="margin-bottom: 32px;">Optionally describe your personality in your own words to refine the AI's understanding.</p>
+    
+    <div style="text-align: left; display: flex; flex-direction: column; gap: 24px;">
+      <div>
+        <label style="display: block; margin-bottom: 10px; font-size: 0.9rem; font-weight: 600; color: var(--text-gray);">How would you describe your personal style?</label>
+        <textarea class="form-input" id="open-text-1" style="min-height: 100px; resize: vertical;" placeholder="e.g. I prefer subtle elegance and timeless pieces over bold trends..."></textarea>
+      </div>
+      <div>
+        <label style="display: block; margin-bottom: 10px; font-size: 0.9rem; font-weight: 600; color: var(--text-gray);">What influences your jewelry choices most?</label>
+        <textarea class="form-input" id="open-text-2" style="min-height: 100px; resize: vertical;" placeholder="e.g. Occasion, material quality, or emotional value..."></textarea>
+      </div>
+    </div>
+    
+    <button class="btn btn-primary" id="btn-submit" style="margin-top: 40px; width: 100%; max-width: 300px;">
+        Generate My Profile
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+const QUESTIONS   = {{ questions_json|safe }};
+const SUBMIT_URL  = "{% url 'survey_submit' %}";
+const CSRF_TOKEN  = "{{ csrf_token }}";
+const SWIPE_FLOW = "{% url 'swipe' %}";
+const DASHBOARD   = "{% url 'dashboard' %}";
+
+const TRAIT_COLORS = {
+  Style:'#818cf8', Material:'#34d399',
+  Occasion:'#fbbf24', Aesthetic:'#f472b6', Budget:'#f87171'
+};
+
+let current = 0;
+const answers = {};
+
+document.getElementById('q-total').textContent = QUESTIONS.length;
+
+function renderQuestion(idx) {
+  if (!QUESTIONS.length) return;
+  const q     = QUESTIONS[idx];
+  const total = QUESTIONS.length;
+  const pct   = Math.round((idx / total) * 100);
+
+  document.getElementById('q-current').textContent   = idx + 1;
+  document.getElementById('progress-bar').style.width = Math.max(4, pct) + '%';
+  document.getElementById('progress-pct').textContent = pct + '% complete';
+  document.getElementById('q-label').textContent      = `Question ${idx + 1} · ${q.category}`;
+  document.getElementById('q-text').textContent       = q.question_text;
+  document.getElementById('trait-label').textContent  = q.category;
+  document.getElementById('trait-dot').style.background = TRAIT_COLORS[q.category] || 'var(--accent-light)';
+
+  document.querySelectorAll('.likert-option').forEach(btn => {
+    btn.classList.toggle('active', +btn.dataset.val === answers[q.id]);
+    btn.onclick = () => {
+      answers[q.id] = +btn.dataset.val;
+      document.querySelectorAll('.likert-option').forEach(b =>
+        b.classList.toggle('active', +b.dataset.val === answers[q.id])
+      );
+    };
+  });
+
+  document.getElementById('btn-prev').disabled      = idx === 0;
+  document.getElementById('btn-next').style.display  = idx < total - 1 ? '' : 'none';
+  document.getElementById('submit-section').style.display = idx === total - 1 ? 'block' : 'none';
+
+  const card = document.getElementById('question-card');
+  card.classList.remove('fade-up'); void card.offsetWidth; card.classList.add('fade-up');
+}
+
+document.getElementById('btn-next').addEventListener('click', () => {
+  const q = QUESTIONS[current];
+  if (!answers[q.id]) {
+    const al = document.getElementById('survey-alert');
+    al.textContent = 'Please select a rating before continuing.';
+    al.classList.add('show');
+    return;
+  }
+  document.getElementById('survey-alert').classList.remove('show');
+  current++; renderQuestion(current);
+});
+
+document.getElementById('btn-prev').addEventListener('click', () => {
+  if (current > 0) { current--; renderQuestion(current); }
+});
+
+document.getElementById('btn-submit').addEventListener('click', async () => {
+  const unanswered = QUESTIONS.filter(q => !answers[q.id]);
+  if (unanswered.length > 0) {
+    const al = document.getElementById('survey-alert');
+    al.textContent = `Please answer all questions. ${unanswered.length} remaining.`;
+    al.classList.add('show');
+    document.getElementById('question-card').scrollIntoView({ behavior:'smooth' });
+    return;
+  }
+
+  // Group by trait
+  const likert_answers = {};
+  QUESTIONS.forEach(q => {
+    if (!likert_answers[q.category]) likert_answers[q.category] = [];
+    likert_answers[q.category].push(answers[q.id]);
+  });
+
+  const open_texts = [
+    document.getElementById('open-text-1').value,
+    document.getElementById('open-text-2').value,
+  ].filter(t => t.trim().length > 0);
+
+  const btn = document.getElementById('btn-submit');
+  btn.innerHTML = '<div class="spinner"></div> Analyzing…'; btn.disabled = true;
+
+  try {
+    const resp = await fetch(SUBMIT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'X-CSRFToken': CSRF_TOKEN },
+      body: JSON.stringify({ likert_answers, open_texts })
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      const al = document.getElementById('survey-success');
+      al.textContent = 'Analysis complete! Redirecting to image matching…';
+      al.classList.add('show');
+      setTimeout(() => window.location.href = SWIPE_FLOW, 1200);
+    } else {
+      throw new Error(data.error || 'Submission failed.');
+    }
+  } catch (err) {
+    document.getElementById('survey-alert').textContent = err.message;
+    document.getElementById('survey-alert').classList.add('show');
+    btn.innerHTML = '<span>Analyze My Profile →</span>'; btn.disabled = false;
+  }
+});
+
+renderQuestion(0);
+</script>
+{% endblock %}

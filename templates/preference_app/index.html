@@ -1,0 +1,224 @@
+{% extends "preference_app/base.html" %}
+{% load static %}
+
+{% block title %}Sign In — AI Preference Identifier{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Hero Section -->
+  <!-- Hero Section -->
+  <section class="grid grid-2" style="min-height: 80vh; align-items: center; margin-bottom: 80px; gap: 60px;">
+    <div class="visible" data-animate>
+      <h4 style="color: var(--accent-primary); margin-bottom: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;">Precision discovery</h4>
+      <h1 style="margin-bottom: 24px; line-height: 1.1;">Your Style, <br/><span class="gradient-text">Decoded by AI.</span></h1>
+      <p style="font-size: 1.2rem; margin-bottom: 32px; max-width: 500px; color: var(--text-white); font-weight: 300;">
+        Experience the intersection of psychology and aesthetics. Our adaptive engine uses the OCEAN model to curate jewelry that resonates with your true identity.
+      </p>
+      
+      {% if not user.is_authenticated %}
+      <div style="display: flex; gap: 16px;">
+        <button class="btn btn-primary" style="padding: 16px 32px;" onclick="document.getElementById('auth-scroll').scrollIntoView({behavior:'smooth'})">Get Started Now</button>
+        <a href="{% url 'about' %}" class="btn btn-outline" style="padding: 16px 32px;">The Science</a>
+      </div>
+      {% else %}
+      <div style="display: flex; gap: 16px;">
+        <a href="{% url 'survey' %}" class="btn btn-primary" style="padding: 16px 32px;">Continue Assessment</a>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline" style="padding: 16px 32px;">View Dashboard</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="visible" style="transition-delay: 0.2s;" data-animate>
+       <div class="hero-visual glass-panel" style="position: relative; overflow: hidden; height: 500px; border-radius: var(--radius-lg);">
+          <img src="{% static 'preference_app/hero_visual.png' %}" alt="AI Jewelry Concept" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.8; mix-blend-mode: plus-lighter;">
+          <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, transparent, var(--bg-dark));"></div>
+          
+          <!-- Floating Stats Overlay -->
+          <div style="position: absolute; bottom: 30px; left: 30px; right: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+              <div class="glass-panel" style="padding: 15px; backdrop-filter: blur(10px);">
+                  <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-primary);">98%</div>
+                  <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim);">Accuracy</div>
+              </div>
+              <div class="glass-panel" style="padding: 15px; backdrop-filter: blur(10px);">
+                  <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-secondary);">OCEAN</div>
+                  <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim);">Driven</div>
+              </div>
+          </div>
+       </div>
+    </div>
+  </section>
+
+  <!-- Project Details: The Engine -->
+  <section style="margin-bottom: 120px;">
+    <div class="grid grid-2" style="gap: 80px; align-items: center;">
+        <div class="visible" data-animate>
+            <h2 style="margin-bottom: 24px;">The <span class="gradient-text">PreferenceAI</span> Engine</h2>
+            <div style="display: flex; flex-direction: column; gap: 32px;">
+                <div style="display: flex; gap: 20px;">
+                    <div style="flex-shrink: 0; width: 44px; height: 44px; background: rgba(129, 140, 248, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent-primary);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 8px;">Cognitive Mapping</h4>
+                        <p style="font-size: 0.95rem;">By analyzing Openness, Extraversion, and Conscientiousness, we understand the "why" behind your style choices.</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 20px;">
+                    <div style="flex-shrink: 0; width: 44px; height: 44px; background: rgba(192, 132, 252, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent-secondary);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 8px;">Adaptive Style Vectors</h4>
+                        <p style="font-size: 0.95rem;">Every interaction refines your personal style vector, allowing the AI to learn your evolving aesthetic preferences in real-time.</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 20px;">
+                    <div style="flex-shrink: 0; width: 44px; height: 44px; background: rgba(52, 211, 153, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--success);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 8px;">Hyper-Personalized Curation</h4>
+                        <p style="font-size: 0.95rem;">We match your profile against a multi-dimensional catalog to find jewelry that isn't just beautiful, but meaningful to you.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="visible" style="transition-delay: 0.2s;" data-animate>
+            <div class="glass-panel" style="padding: 50px; text-align: center; background: radial-gradient(circle at top right, rgba(129, 140, 248, 0.05), transparent);">
+                <div style="font-size: 4rem; margin-bottom: 24px;">🧠</div>
+                <h3 style="margin-bottom: 16px;">The Human Element</h3>
+                <p style="margin-bottom: 32px; line-height: 1.8;">
+                    While our algorithms are powerful, they are designed to amplify your personal expression. PreferenceAI doesn't tell you what to wear; it reveals what you already love.
+                </p>
+                <div style="display: flex; justify-content: center; gap: 40px; border-top: 1px solid var(--glass-stroke); padding-top: 32px;">
+                    <div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-primary);">10k+</div>
+                        <div style="font-size: 0.7rem; color: var(--text-dim);">Traits Analyzed</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-secondary);">0.2s</div>
+                        <div style="font-size: 0.7rem; color: var(--text-dim);">Inference Time</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  </section>
+
+
+  <!-- How it Works -->
+  <section style="margin-bottom: 120px; text-align: center;">
+    <h2 style="margin-bottom: 48px;" data-animate class="visible">How it <span class="gradient-text">Works</span></h2>
+    <div class="grid grid-3" style="gap: 32px;">
+      <div class="glass-panel visible" data-animate style="padding: 32px; transition-delay: 0.1s;">
+        <div style="font-size: 2rem; margin-bottom: 20px;">📝</div>
+        <h3 style="margin-bottom: 12px;">1. Personality Quiz</h3>
+        <p>Complete a tailored 25-question survey to map your personality archetype.</p>
+      </div>
+      <div class="glass-panel visible" data-animate style="padding: 32px; transition-delay: 0.2s;">
+        <div style="font-size: 2rem; margin-bottom: 20px;">✨</div>
+        <h3 style="margin-bottom: 12px;">2. Visual Training</h3>
+        <p>Swipe on curated jewelry pieces to help the AI understand your visual taste.</p>
+      </div>
+      <div class="glass-panel visible" data-animate style="padding: 32px; transition-delay: 0.3s;">
+        <div style="font-size: 2rem; margin-bottom: 20px;">🎯</div>
+        <h3 style="margin-bottom: 12px;">3. AI Insight</h3>
+        <p>Receive a comprehensive profile and personalized jewelry recommendations.</p>
+      </div>
+    </div>
+  </section>
+
+  {% if not user.is_authenticated %}
+  <!-- Auth Section -->
+  <section id="auth-scroll" style="margin-bottom: 100px; max-width: 500px; margin-inline: auto;">
+    <div class="visible" data-animate>
+      <div class="glass-panel" style="padding: 40px;">
+        <div style="margin-bottom: 32px; text-align: center;">
+          <h2 style="margin-bottom: 8px;">Get Started</h2>
+          <p>Create your profile to begin the assessment.</p>
+        </div>
+
+        <!-- Tab Switching UI -->
+        <div style="display: flex; gap: 8px; margin-bottom: 32px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: var(--radius-sm);">
+          <button class="btn btn-full tab-btn {% if active_tab == 'login' %}btn-primary{% else %}btn-outline{% endif %}" data-tab="login" style="padding: 10px;">Login</button>
+          <button class="btn btn-full tab-btn {% if active_tab == 'register' %}btn-primary{% else %}btn-outline{% endif %}" data-tab="register" style="padding: 10px;">Register</button>
+        </div>
+
+        <!-- Login Panel -->
+        <div id="panel-login" class="auth-panel {% if active_tab == 'login' %}active{% endif %}">
+          <form method="post" action="/">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="login" />
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-gray);">Email Address</label>
+              {{ login_form.email }}
+            </div>
+            <div style="margin-bottom: 32px;">
+              <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-gray);">Password</label>
+              {{ login_form.password }}
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+          </form>
+        </div>
+
+        <!-- Register Panel -->
+        <div id="panel-register" class="auth-panel {% if active_tab == 'register' %}active{% endif %}">
+          <form method="post" action="/">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="register" />
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-gray);">Full Name</label>
+              {{ register_form.name }}
+            </div>
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-gray);">Email Address</label>
+              {{ register_form.email }}
+            </div>
+            <div style="margin-bottom: 32px;">
+              <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-gray);">Create Password</label>
+              {{ register_form.password }}
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Get Started</button>
+          </form>
+        </div>
+        
+        {% if login_form.errors or register_form.errors %}
+        <div style="margin-top: 24px; padding: 12px; background: rgba(248,113,113,0.1); border-radius: var(--radius-sm); color: var(--danger); font-size: 0.9rem; text-align: center;">
+             Invalid credentials or profile data. Please try again.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+</div>
+
+<script>
+  // Auth Tab Handling
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      
+      // Update Buttons
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('btn-primary');
+        b.classList.add('btn-outline');
+      });
+      btn.classList.add('btn-primary');
+      btn.classList.remove('btn-outline');
+
+      // Update Panels
+      document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + target).classList.add('active');
+    });
+  });
+
+  // Adding form-input class to django fields
+  window.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('input').forEach(input => {
+        if(input.type !== 'hidden') input.classList.add('form-input');
+    });
+  });
+</script>
+{% endblock %}
+

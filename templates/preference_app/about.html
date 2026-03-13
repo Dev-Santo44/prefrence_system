@@ -1,0 +1,38 @@
+{% extends "preference_app/base.html" %}
+{% load static %}
+
+{% block title %}About Us — PreferenceAI{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px;">
+  <div style="text-align: center; margin-bottom: 60px;" data-animate class="visible">
+    <h1 style="margin-bottom: 16px;">Our <span class="gradient-text">Vision</span></h1>
+    <p style="font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+      PreferenceAI bridges the gap between personality psychology and aesthetic preference using the proven OCEAN model.
+    </p>
+  </div>
+
+  <div class="grid grid-2" style="gap: 40px; margin-bottom: 80px;">
+    <div class="glass-panel visible" style="padding: 40px; transition-delay: 0.1s;" data-animate>
+      <h3 style="color: var(--accent-primary); margin-bottom: 20px;">The OCEAN Model</h3>
+      <p style="line-height: 1.8;">
+        We utilize the "Big Five" personality traits—Openness, Conscientiousness, Extraversion, Agreeableness, and Neuroticism—to build a multi-dimensional profile of your preferences. By understanding who you are, we can predict what you'll love.
+      </p>
+    </div>
+    <div class="glass-panel visible" style="padding: 40px; transition-delay: 0.2s;" data-animate>
+      <h3 style="color: var(--accent-secondary); margin-bottom: 20px;">AI Precision</h3>
+      <p style="line-height: 1.8;">
+        Our recommendation engine captures subtle signals from both your survey responses and visual interactions. This dual-input approach ensures that your jewelry matches aren't just trendy, but deeply personal.
+      </p>
+    </div>
+  </div>
+
+  <div class="glass-panel visible" style="padding: 60px; text-align: center; margin-bottom: 100px; transition-delay: 0.3s;" data-animate>
+    <h2 style="margin-bottom: 24px;">Join the Evolution</h2>
+    <p style="margin-bottom: 40px; max-width: 600px; margin-inline: auto;">
+      Experience the future of personalized discovery. Whether you're looking for everyday elegance or statement pieces, let AI guide your style journey.
+    </p>
+    <a href="{% url 'index' %}" class="btn btn-primary" style="padding: 16px 40px;">Get Started Now</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,311 @@
+{% extends "preference_app/base.html" %}
+{% load static %}
+
+{% block title %}Match Your Style — PreferenceAI{% endblock %}
+
+{% block extra_head %}
+<!-- Hammer.js for Touch Gestures -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+
+<style>
+.swipe-stage {
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+    height: 520px;
+    margin: 40px auto;
+    perspective: 1000px;
+}
+
+.swipe-card {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-stroke);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    cursor: grab;
+    transition: transform 0.4s var(--ease-premium), opacity 0.3s ease;
+    will-change: transform;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.swipe-card:active { cursor: grabbing; }
+
+.swipe-card img {
+    width: 100%;
+    height: 380px;
+    object-fit: cover;
+    pointer-events: none;
+    border-bottom: 1px solid var(--glass-stroke);
+}
+
+.swipe-indicator {
+    position: absolute;
+    top: 30px;
+    padding: 8px 16px;
+    border: 3px solid;
+    border-radius: var(--radius-sm);
+    font-weight: 800;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    opacity: 0;
+    z-index: 10;
+    pointer-events: none;
+}
+.indicator-like {
+    right: 30px;
+    color: var(--success);
+    border-color: var(--success);
+    transform: rotate(15deg);
+}
+.indicator-dislike {
+    left: 30px;
+    color: var(--danger);
+    border-color: var(--danger);
+    transform: rotate(-15deg);
+}
+
+@media (max-width: 480px) {
+    .swipe-stage { height: 460px; max-width: 320px; }
+    .swipe-card img { height: 320px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container" style="margin-top: 40px;">
+    <div class="visible" style="text-align: center; margin-bottom: 40px;" data-animate>
+        <h1 style="margin-bottom: 12px;">Visual <span class="gradient-text">Matching</span></h1>
+        <p>Refine your profile by swiping on items you find appealing.</p>
+    </div>
+
+    <!-- Progress -->
+    <div class="visible" style="max-width: 360px; margin: 0 auto 24px; transition-delay: 0.1s;" data-animate>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.75rem; font-weight: 700; color: var(--text-dim);">
+            <span id="progress-text">0 / 20 ITEMS</span>
+            <span id="progress-pct-text">0%</span>
+        </div>
+        <div class="progress-bar-outer" style="height: 4px;">
+            <div id="progress-bar" class="progress-bar-inner" style="width: 0%;"></div>
+        </div>
+    </div>
+
+    <!-- Card Stack -->
+    <div class="swipe-stage visible" id="swipe-container" style="transition-delay: 0.2s;" data-animate>
+        <!-- Cards injected via JS -->
+    </div>
+
+    <!-- Actions -->
+    <div class="visible" style="display: flex; justify-content: center; gap: 24px; margin-top: 32px; transition-delay: 0.3s;" data-animate>
+        <button class="btn btn-outline" onclick="handleAction(false)" style="width: 70px; height: 70px; border-radius: 50%; font-size: 1.5rem;">✕</button>
+        <button class="btn btn-primary" onclick="handleAction(true)" style="width: 70px; height: 70px; border-radius: 50%; font-size: 1.5rem;">❤</button>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+let items = [];
+let currentIndex = 0;
+let likedIds = [];
+let dislikedIds = [];
+
+// Prevent default dragging of images
+document.addEventListener('dragstart', (e) => {
+    if(e.target.tagName === 'IMG') e.preventDefault();
+});
+
+// Load the catalog
+fetch("/swipe/images/")
+    .then(r => r.json())
+    .then(data => {
+        if(data.items && data.items.length > 0) {
+            items = data.items;
+            renderCards();
+        } else {
+            alert("Could not load catalog images.");
+        }
+    });
+
+function renderCards() {
+    const container = document.getElementById("swipe-container");
+    container.innerHTML = "";
+    
+    // Render in reverse so the first item is on top (highest z-index)
+    for (let i = items.length - 1; i >= 0; i--) {
+        const item = items[i];
+        const card = document.createElement("div");
+        card.className = "swipe-card";
+        card.dataset.id = item.id;
+        card.dataset.index = i;
+        
+        card.innerHTML = `
+            <div class="swipe-indicator indicator-like">LOVE IT</div>
+            <div class="swipe-indicator indicator-dislike">NOPE</div>
+            <img src="${item.image_url}" alt="${item.name}" crossorigin="anonymous">
+            <div style="padding: 24px; text-align: center;">
+                <h4 style="margin-bottom: 4px; color: white;">${item.name}</h4>
+                <p style="font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">${item.item_type} &bull; ${item.style}</p>
+            </div>
+        `;
+        
+        container.appendChild(card);
+        
+        if (i === 0) {
+            initHammer(card);
+        }
+    }
+    updateProgress();
+}
+
+function initHammer(card) {
+    const hammertime = new Hammer(card);
+    
+    hammertime.on("pan", function(ev) {
+        if (ev.deltaX === 0) return;
+        if (ev.center.x === 0 && ev.center.y === 0) return;
+
+        card.style.transition = 'none';
+        
+        // Tilt effect
+        let rotate = ev.deltaX * 0.05;
+        card.style.transform = `translate(${ev.deltaX}px, ${ev.deltaY}px) rotate(${rotate}deg)`;
+
+        // Show Indicators
+        const likeInd = card.querySelector('.indicator-like');
+        const dislikeInd = card.querySelector('.indicator-dislike');
+        
+        if (ev.deltaX > 50) {
+            likeInd.style.opacity = Math.min(ev.deltaX / 100, 1);
+            dislikeInd.style.opacity = 0;
+        } else if (ev.deltaX < -50) {
+            dislikeInd.style.opacity = Math.min(Math.abs(ev.deltaX) / 100, 1);
+            likeInd.style.opacity = 0;
+        } else {
+            likeInd.style.opacity = 0;
+            dislikeInd.style.opacity = 0;
+        }
+    });
+
+    hammertime.on("panend", function(ev) {
+        card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+        
+        // Threshold to trigger swipe action
+        if (ev.deltaX > 100) {
+            throwCard(card, 1); // Like
+        } else if (ev.deltaX < -100) {
+            throwCard(card, -1); // Dislike
+        } else {
+            // Reset position
+            card.style.transform = '';
+            card.querySelector('.indicator-like').style.opacity = 0;
+            card.querySelector('.indicator-dislike').style.opacity = 0;
+        }
+    });
+}
+
+function handleAction(isLike) {
+    const cards = document.querySelectorAll('.swipe-card');
+    if (cards.length === 0) return;
+    
+    // The top card is the last child in the DOM due to reverse rendering
+    const topCard = cards[cards.length - 1];
+    
+    if (isLike) {
+        topCard.querySelector('.indicator-like').style.opacity = 1;
+        throwCard(topCard, 1);
+    } else {
+        topCard.querySelector('.indicator-dislike').style.opacity = 1;
+        throwCard(topCard, -1);
+    }
+}
+
+function throwCard(card, direction) {
+    const itemId = parseInt(card.dataset.id);
+    
+    // Throw animation
+    card.style.transform = `translate(${direction * window.innerWidth}px, 50px) rotate(${direction * 30}deg)`;
+    card.style.opacity = 0;
+    
+    // Record action
+    if (direction === 1) {
+        likedIds.push(itemId);
+    } else {
+        dislikedIds.push(itemId);
+    }
+    
+    setTimeout(() => {
+        card.remove();
+        currentIndex++;
+        updateProgress();
+        
+        const nextCards = document.querySelectorAll('.swipe-card');
+        if (nextCards.length > 0) {
+            // Initialize hammer on the new top card
+            initHammer(nextCards[nextCards.length - 1]);
+        } else {
+            submitSwipeResults();
+        }
+    }, 300);
+}
+
+function updateProgress() {
+    const total = items.length;
+    const currentCount = currentIndex;
+    const pct = total === 0 ? 0 : Math.round((currentCount / total) * 100);
+    
+    document.getElementById("progress-text").innerText = `${currentCount} / ${total} ITEMS`;
+    document.getElementById("progress-pct-text").innerText = `${pct}%`;
+    document.getElementById("progress-bar").style.width = pct + "%";
+}
+
+function submitSwipeResults() {
+    const payload = {
+        liked_ids: likedIds,
+        disliked_ids: dislikedIds
+    };
+    
+    fetch('/swipe/submit/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.ok) {
+            window.location.href = '/dashboard/';
+        } else {
+            alert('Error submitting swipe data.');
+        }
+    })
+    .catch(err => console.error(err));
+}
+
+// Helper to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

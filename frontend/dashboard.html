@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Your AI-generated OCEAN personality profile and personalized preference recommendations." />
+  <title>My Profile — AI Preference Identifier</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .dash-layout { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    .dash-header { text-align: center; margin-bottom: 48px; }
+    .dash-header h1 { font-size: 2rem; margin: 12px 0 10px; }
+    .dash-header p  { color: var(--text-secondary); }
+
+    /* Grid */
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 680px) { .results-grid { grid-template-columns: 1fr; } }
+
+    .chart-card { grid-column: 1 / -1; text-align: center; }
+    .chart-wrap { max-width: 420px; margin: 0 auto; }
+
+    /* Trait score cards */
+    .trait-card {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .trait-header { display: flex; align-items: center; justify-content: space-between; }
+    .trait-name { font-weight: 700; font-size: 0.95rem; }
+    .trait-score { font-size: 1.5rem; font-weight: 800; color: var(--accent-light); }
+    .trait-desc  { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* Recommendations */
+    .reco-card { grid-column: 1 / -1; }
+    .reco-card h3 { margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .reco-body {
+      background: rgba(124,92,252,0.07);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+      padding: 16px 20px;
+      font-size: 0.92rem; line-height: 1.75;
+      color: var(--text-secondary);
+    }
+
+    .retake-btn { margin-top: 36px; text-align: center; }
+
+    /* Loading state */
+    #loading-state { text-align: center; padding: 80px 24px; }
+    #loading-state .spinner { width: 48px; height: 48px; margin: 0 auto 20px; border-width: 4px; }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container inner">
+      <a class="logo" href="index.html">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+        </svg>
+        Preference<span>AI</span>
+      </a>
+      <div class="navbar-links">
+        <span id="nav-username" style="color:var(--text-secondary);font-size:0.9rem;"></span>
+        <a href="survey.html">Retake Survey</a>
+        <a href="#" id="logout-link">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-wrapper">
+    <div class="dash-layout">
+
+      <!-- Header -->
+      <div class="dash-header fade-up">
+        <span class="badge">Your Personality Profile</span>
+        <h1>OCEAN <span class="gradient-text">Analysis Results</span></h1>
+        <p>Here's what your responses reveal about your personality and preferences.</p>
+      </div>
+
+      <!-- Loading state -->
+      <div id="loading-state">
+        <div class="spinner"></div>
+        <p style="color:var(--text-muted);">Loading your results…</p>
+      </div>
+
+      <!-- Results grid -->
+      <div class="results-grid fade-up" id="results-grid" style="display:none;">
+
+        <!-- Radar Chart -->
+        <div class="card chart-card" id="chart-card">
+          <h3 style="margin-bottom:20px;">Trait Overview</h3>
+          <div class="chart-wrap">
+            <canvas id="ocean-radar" width="400" height="400"></canvas>
+          </div>
+        </div>
+
+        <!-- Trait Cards (5) — populated by JS -->
+        <div class="card trait-card fade-up" id="card-openness" style="animation-delay:0.05s">
+          <div class="trait-header">
+            <span class="trait-name" style="color:#818cf8;">🔭 Openness</span>
+            <span class="trait-score" id="score-openness">—</span>
+          </div>
+          <div class="progress-bar-outer"><div class="progress-bar-inner" id="bar-openness" style="width:0%;background:linear-gradient(90deg,#6366f1,#818cf8)"></div></div>
+          <p class="trait-desc" id="desc-openness"></p>
+        </div>
+
+        <div class="card trait-card fade-up" id="card-conscientiousness" style="animation-delay:0.10s">
+          <div class="trait-header">
+            <span class="trait-name" style="color:#34d399;">📋 Conscientiousness</span>
+            <span class="trait-score" id="score-conscientiousness">—</span>
+          </div>
+          <div class="progress-bar-outer"><div class="progress-bar-inner" id="bar-conscientiousness" style="width:0%;background:linear-gradient(90deg,#059669,#34d399)"></div></div>
+          <p class="trait-desc" id="desc-conscientiousness"></p>
+        </div>
+
+        <div class="card trait-card fade-up" id="card-extraversion" style="animation-delay:0.15s">
+          <div class="trait-header">
+            <span class="trait-name" style="color:#fbbf24;">⚡ Extraversion</span>
+            <span class="trait-score" id="score-extraversion">—</span>
+          </div>
+          <div class="progress-bar-outer"><div class="progress-bar-inner" id="bar-extraversion" style="width:0%;background:linear-gradient(90deg,#d97706,#fbbf24)"></div></div>
+          <p class="trait-desc" id="desc-extraversion"></p>
+        </div>
+
+        <div class="card trait-card fade-up" id="card-agreeableness" style="animation-delay:0.20s">
+          <div class="trait-header">
+            <span class="trait-name" style="color:#f472b6;">🤝 Agreeableness</span>
+            <span class="trait-score" id="score-agreeableness">—</span>
+          </div>
+          <div class="progress-bar-outer"><div class="progress-bar-inner" id="bar-agreeableness" style="width:0%;background:linear-gradient(90deg,#db2777,#f472b6)"></div></div>
+          <p class="trait-desc" id="desc-agreeableness"></p>
+        </div>
+
+        <div class="card trait-card fade-up" id="card-neuroticism" style="animation-delay:0.25s">
+          <div class="trait-header">
+            <span class="trait-name" style="color:#f87171;">🌊 Neuroticism</span>
+            <span class="trait-score" id="score-neuroticism">—</span>
+          </div>
+          <div class="progress-bar-outer"><div class="progress-bar-inner" id="bar-neuroticism" style="width:0%;background:linear-gradient(90deg,#dc2626,#f87171)"></div></div>
+          <p class="trait-desc" id="desc-neuroticism"></p>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="card reco-card fade-up" style="animation-delay:0.30s">
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 8v4l3 3"/></svg>
+            Personalized Recommendations
+          </h3>
+          <div class="reco-body" id="reco-text">Loading…</div>
+        </div>
+
+      </div>
+
+      <!-- Retake -->
+      <div class="retake-btn fade-up" id="retake-section" style="display:none;">
+        <a href="survey.html" class="btn btn-outline" style="margin-right:12px;">Retake Survey</a>
+        <button class="btn btn-primary" onclick="window.print()">Download Report</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // ── Auth guard ──────────────────────────────────────────────────
+    const user = getUser();
+    if (!user) window.location.href = 'index.html';
+    document.getElementById('nav-username').textContent = user?.name || '';
+    document.getElementById('logout-link').addEventListener('click', e => { e.preventDefault(); logout(); });
+
+    const TRAIT_DESCS = {
+      openness: {
+        high: "You are imaginative, curious, and open to novel experiences.",
+        low:  "You prefer routine and concrete over abstract and novel."
+      },
+      conscientiousness: {
+        high: "You are organized, disciplined, and highly reliable.",
+        low:  "You are flexible, spontaneous, and enjoy going with the flow."
+      },
+      extraversion: {
+        high: "You are sociable, energetic, and thrive in group settings.",
+        low:  "You are introspective, calm, and prefer solitary focus time."
+      },
+      agreeableness: {
+        high: "You are cooperative, empathetic, and prioritize harmony.",
+        low:  "You are competitive, direct, and prefer challenge over compromise."
+      },
+      neuroticism: {
+        high: "You experience emotions intensely and may benefit from stress management.",
+        low:  "You are emotionally stable, calm, and resilient under pressure."
+      }
+    };
+
+    function animateScore(elId, barId, value) {
+      const el   = document.getElementById(elId);
+      const bar  = document.getElementById(barId);
+      let cur    = 0;
+      const step = value / 40;
+      const iv   = setInterval(() => {
+        cur = Math.min(cur + step, value);
+        el.textContent = Math.round(cur);
+        bar.style.width = Math.round(cur) + '%';
+        if (cur >= value) clearInterval(iv);
+      }, 18);
+    }
+
+    function renderResults(r) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('results-grid').style.display = 'grid';
+      document.getElementById('retake-section').style.display = 'block';
+
+      const traits = ['openness', 'conscientiousness', 'extraversion', 'agreeableness', 'neuroticism'];
+      const keys   = ['openness_score', 'conscientiousness_score', 'extraversion_score', 'agreeableness_score', 'neuroticism_score'];
+
+      traits.forEach((t, i) => {
+        const val = Math.round(r[keys[i]] || 0);
+        animateScore('score-' + t, 'bar-' + t, val);
+        document.getElementById('desc-' + t).textContent =
+          val >= 50 ? TRAIT_DESCS[t].high : TRAIT_DESCS[t].low;
+      });
+
+      document.getElementById('reco-text').textContent = r.recommendations || 'No recommendations available.';
+
+      // Radar Chart
+      const ctx = document.getElementById('ocean-radar').getContext('2d');
+      new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['Openness', 'Conscientiousness', 'Extraversion', 'Agreeableness', 'Neuroticism'],
+          datasets: [{
+            label: 'Your Profile',
+            data: keys.map(k => Math.round(r[k] || 0)),
+            backgroundColor : 'rgba(124, 92, 252, 0.20)',
+            borderColor     : 'rgba(124, 92, 252, 0.90)',
+            pointBackgroundColor: ['#818cf8','#34d399','#fbbf24','#f472b6','#f87171'],
+            pointBorderColor: '#fff',
+            pointRadius     : 5,
+            borderWidth     : 2,
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            r: {
+              min: 0, max: 100, ticks: { stepSize: 25, color: '#5c5888', font: { size: 10 }, backdropColor: 'transparent' },
+              grid: { color: 'rgba(255,255,255,0.06)' },
+              angleLines: { color: 'rgba(255,255,255,0.06)' },
+              pointLabels: { color: '#9893c8', font: { size: 12, family: 'Inter', weight: '500' } }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f1022',
+              borderColor: 'rgba(124,92,252,0.40)',
+              borderWidth: 1,
+              titleColor: '#f1f0ff',
+              bodyColor: '#9893c8',
+            }
+          }
+        }
+      });
+    }
+
+    async function loadResults() {
+      // Try local storage first (freshly submitted)
+      const cached = localStorage.getItem('pref_results');
+      if (cached) {
+        renderResults(JSON.parse(cached));
+        localStorage.removeItem('pref_results');
+        return;
+      }
+
+      // Fetch from API
+      try {
+        const data = await apiFetch('/results/' + user.user_id);
+        renderResults(data.results);
+      } catch (err) {
+        document.getElementById('loading-state').innerHTML =
+          `<p style="color:var(--danger)">Could not load results: ${err.message}</p>
+           <a href="survey.html" class="btn btn-primary" style="margin-top:20px;">Take Survey</a>`;
+      }
+    }
+
+    loadResults();
+  </script>
+</body>
+</html>
