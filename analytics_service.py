@@ -45,8 +45,8 @@ def get_weekly_signups():
     today = timezone.now()
     eight_weeks_ago = today - timedelta(weeks=8)
     
-    users = User.objects.filter(created_at__gte=eight_weeks_ago).values("created_at")
-    df = pd.DataFrame(list(users))
+    users = User.objects.filter(date_joined__gte=eight_weeks_ago).values("date_joined")
+    df["date"] = pd.to_datetime(df["date_joined"]).dt.date
     
     if df.empty:
         return pd.DataFrame(columns=["date", "count"])
@@ -74,7 +74,7 @@ def get_top_catalog_items():
     """Returns the most liked items from swipe responses."""
     data = (
         SwipeResponse.objects.filter(action="like")
-        .values("item__name", "item__item_type")
+        .values("catalog_item__name", "catalog_item__item_type")
         .annotate(likes=Count("id"))
         .order_by("-likes")[:10]
     )
