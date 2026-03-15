@@ -7,6 +7,10 @@ import sys
 import os
 import json
 
+import numpy as np
+
+from .models import SwipeResponse, JewelryCatalog, PreferenceResult
+
 # Allow imports from project root (for models/)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -336,3 +340,36 @@ def tryon_api_view(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+# In preference_app/views.py
+
+
+
+def compute_visual_preference_scores(user):
+    """Average CNN feature vectors of liked items → map to jewelry dimensions."""
+    liked_items = SwipeResponse.objects.filter(
+        session__user=user, action='like'
+    ).select_related('item')
+
+    if not liked_items.exists():
+        return None  # No swipe data yet
+
+    vectors = []
+    for resp in liked_items:
+        if resp.item.visual_features:
+            vectors.append(json.loads(resp.item.visual_features))
+
+    if not vectors:
+        return None
+
+    avg_vector = np.mean(vectors, axis=0)
+
+    # Map the 1280-dim MobileNet vector to your 5 jewelry dimensions
+    # Split the vector into 5 equal segments, take mean of each
+    chunk = len(avg_vector) // 5
+    return {
+        'style_score':     float(np.mean(avg_vector[0:chunk])),
+        'material_score':  float(np.mean(avg_vector[chunk:chunk*2])),
+        'occasion_score':  float(np.mean(avg_vector[chunk*2:chunk*3])),
+        'aesthetic_score': float(np.mean(avg_vector[chunk*3:chunk*4])),
+        'budget_score':    float(np.mean(avg_vector[chunk*4:]))
+    }

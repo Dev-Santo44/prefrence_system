@@ -241,3 +241,19 @@ def score_and_recommend(
         "persona": persona,
         "recommendations": recommendations,
     }
+def assign_persona(scores):
+    style    = scores.get('style_score', 0)
+    material = scores.get('material_score', 0)
+    occasion = scores.get('occasion_score', 0)
+    budget   = scores.get('budget_score', 0)
+
+    if occasion > 0.7 and material > 0.6:
+        return "Traditional Bridal Buyer"
+    elif style < 0.4 and budget < 0.5:
+        return "Minimalist Daily Wearer"
+    elif style > 0.7 and budget < 0.5:
+        return "Fashion-Forward Budget Buyer"
+    elif budget > 0.7:
+        return "Luxury Investment Buyer"
+    else:
+        return "Casual Trendy Buyer"

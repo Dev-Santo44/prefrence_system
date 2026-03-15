@@ -12,7 +12,7 @@ urlpatterns = [
     path("about/",     views.about_view,          name="about"),
     path("contact/",   views.contact_view,        name="contact"),
     path("swipe/",     views.swipe_view,          name="swipe"),
-
+    
     path("swipe/images/", views.swipe_images_api, name="swipe_images"),
     path("swipe/submit/", views.swipe_submit_view, name="swipe_submit"),
 
