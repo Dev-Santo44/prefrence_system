@@ -1,0 +1,108 @@
+{% extends "preference_app/base.html" %}
+{% block title %}{{ title }} — PreferenceAI{% endblock %}
+{% block content %}
+{% include "preference_app/sub_nav.html" %}
+<style>
+    .hub-container {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 30px;
+        margin-top: 20px;
+        padding-bottom: 80px;
+    }
+    .order-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 30px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+    .order-img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 16px;
+    }
+    .care-card {
+        background: rgba(129, 140, 248, 0.05);
+        border: 1px solid rgba(129, 140, 248, 0.2);
+        border-radius: 20px;
+        padding: 24px;
+        margin-bottom: 20px;
+        transition: all 0.3s;
+    }
+    .care-card:hover {
+        background: rgba(129, 140, 248, 0.1);
+        transform: scale(1.02);
+    }
+    .badge-status {
+        background: #34d39922;
+        color: #34d399;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+</style>
+
+<div class="container hub-container">
+    <!-- Left: Orders & Styling -->
+    <div>
+        <h1 class="gradient-text" style="font-size: 2.5rem; margin-bottom: 30px; margin-top: 20px;">Your Jewelry Box</h1>
+        
+        <h3 style="margin-bottom: 20px;">Recent Additions</h3>
+        {% for order in orders %}
+        <div class="order-card">
+            <img src="{{ order.image_url }}" alt="{{ order.name }}" class="order-img" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=200&auto=format'">
+            <div style="flex: 1;">
+                <div class="badge-status">Delivered</div>
+                <h4 style="margin: 8px 0;">{{ order.name }}</h4>
+                <p class="text-gray" style="font-size: 0.9rem;">Purchased on March {{ forloop.counter|add:10 }}, 2026</p>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="btn btn-sm btn-outline">Wear Again</button>
+                    <button class="btn btn-sm">Write Review</button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="glass-panel" style="padding: 40px; text-align: center;">
+            <p>Your jewelry box is empty. Start your journey with our <a href="{% url 'dashboard' %}">AI Recommendations</a>.</p>
+        </div>
+        {% endfor %}
+
+        <h3 style="margin: 40px 0 20px;">Styling Inspiration for You</h3>
+        <div class="glass-panel" style="padding: 30px; display: flex; align-items: center; gap: 20px; background: linear-gradient(90deg, rgba(244,114,182,0.1), transparent);">
+            <div style="font-size: 2.5rem;">💡</div>
+            <div>
+                <h4 style="margin-bottom: 5px;">Pairing Suggestion</h4>
+                <p class="text-gray" style="font-size: 0.9rem;">Based on your recent purchase, we suggest layering it with the <strong>Gold Herringbone Chain</strong> for a modern stack.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Care & Maintenance -->
+    <div>
+        <h3 style="margin-bottom: 30px;">Jewelry Care</h3>
+        {% for guide in care_guides %}
+        <div class="care-card">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 12px;">
+                <span style="font-size: 1.5rem;">{{ guide.icon }}</span>
+                <h4 style="margin: 0;">{{ guide.title }}</h4>
+            </div>
+            <p class="text-gray" style="font-size: 0.85rem; line-height: 1.5;">{{ guide.desc }}</p>
+        </div>
+        {% endfor %}
+
+        <div class="glass-panel" style="padding: 24px; text-align: center; margin-top: 30px; border-color: rgba(251, 191, 36, 0.3);">
+            <div style="font-size: 1.5rem; margin-bottom: 10px;">🛡️</div>
+            <h4 style="margin-bottom: 5px;">Lifetime Warranty</h4>
+            <p class="text-gray" style="font-size: 0.8rem;">Your pieces are protected. Need a cleaning or repair?</p>
+            <button class="btn btn-sm btn-primary" style="margin-top: 15px; width: 100%;">Book Service</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

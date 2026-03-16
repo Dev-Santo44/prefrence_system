@@ -1,0 +1,227 @@
+{% extends "preference_app/base.html" %}
+{% block title %}{{ title }} — PreferenceAI{% endblock %}
+{% block content %}
+{% include "preference_app/sub_nav.html" %}
+<style>
+    .builder-container {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 30px;
+        margin-top: 20px;
+        height: calc(100vh - 120px);
+    }
+    .inventory-sidebar {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 24px;
+        overflow-y: auto;
+    }
+    .look-stage {
+        background: radial-gradient(circle at center, rgba(129, 140, 248, 0.1) 0%, transparent 70%);
+        border: 1px dashed rgba(255, 255, 255, 0.1);
+        border-radius: 32px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    .category-title {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-gray);
+        margin: 20px 0 12px;
+    }
+    .inventory-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    .inventory-item {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 8px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid transparent;
+        text-align: center;
+    }
+    .inventory-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(129, 140, 248, 0.4);
+        transform: translateY(-2px);
+    }
+    .inventory-item img {
+        width: 100%;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 12px;
+    }
+    .item-label {
+        font-size: 0.75rem;
+        margin-top: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+    }
+    .stacked-item {
+        position: absolute;
+        cursor: move;
+        transition: transform 0.2s;
+        filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+    }
+    .stacked-item img {
+        max-width: 250px;
+        height: auto;
+    }
+    .stage-controls {
+        position: absolute;
+        bottom: 30px;
+        right: 30px;
+        display: flex;
+        gap: 12px;
+    }
+    .layer-controls {
+        position: absolute;
+        top: 30px;
+        right: 30px;
+        background: rgba(0,0,0,0.4);
+        backdrop-filter: blur(10px);
+        padding: 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(255,255,255,0.1);
+        z-index: 100;
+        display: none;
+    }
+</style>
+
+<div class="container builder-container">
+    <!-- Sidebar -->
+    <div class="inventory-sidebar custom-scrollbar">
+        <h2 class="gradient-text">Look Builder</h2>
+        <p class="text-gray" style="font-size: 0.9rem;">Select items to layer and stack</p>
+        
+        {% for category, items in categorized.items %}
+        <div class="category-title">{{ category }}</div>
+        <div class="inventory-grid">
+            {% for item in items %}
+            <div class="inventory-item" onclick="addToStage('{{ item.image_url }}', '{{ item.name }}', '{{ item.id }}')">
+                <img src="{{ item.image_url }}" alt="{{ item.name }}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=200&auto=format'">
+                <span class="item-label">{{ item.name }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Stage -->
+    <div class="look-stage" id="stage">
+        <div id="empty-state" style="text-align: center; color: var(--text-gray);">
+            <div style="font-size: 4rem; margin-bottom: 20px;">✨</div>
+            <p>Select jewelry from the sidebar to start building your look</p>
+        </div>
+
+        <div class="layer-controls" id="layer-controls">
+            <button class="btn btn-sm" onclick="adjustLayer('up')">🔼 Bring Forward</button>
+            <button class="btn btn-sm" onclick="adjustLayer('down')">🔽 Send Back</button>
+            <button class="btn btn-sm btn-danger" onclick="removeItem()">🗑️ Remove</button>
+        </div>
+
+        <div class="stage-controls">
+            <button class="btn btn-primary" onclick="window.print()">📸 Capture Look</button>
+            <button class="btn" onclick="clearStage()" style="background: rgba(255,255,255,0.05);">🧹 Clear All</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let activeItem = null;
+    let zIndexCounter = 10;
+
+    function addToStage(url, name, id) {
+        const stage = document.getElementById('stage');
+        const emptyState = document.getElementById('empty-state');
+        if(emptyState) emptyState.style.display = 'none';
+
+        const item = document.createElement('div');
+        item.className = 'stacked-item';
+        item.style.left = '40%';
+        item.style.top = '30%';
+        item.style.zIndex = zIndexCounter++;
+        item.innerHTML = `<img src="${url}" alt="${name}">`;
+
+        // Interaction
+        item.onmousedown = (e) => startDrag(e, item);
+        item.onclick = (e) => {
+            e.stopPropagation();
+            setActive(item);
+        };
+
+        stage.appendChild(item);
+        setActive(item);
+    }
+
+    function setActive(item) {
+        if(activeItem) activeItem.style.outline = 'none';
+        activeItem = item;
+        activeItem.style.outline = '2px solid var(--accent-primary)';
+        document.getElementById('layer-controls').style.display = 'flex';
+        document.getElementById('layer-controls').style.flexDirection = 'column';
+        document.getElementById('layer-controls').style.gap = '8px';
+    }
+
+    function startDrag(e, element) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        
+        document.onmouseup = () => {
+            document.onmouseup = null;
+            document.onmousemove = null;
+        };
+        
+        document.onmousemove = (e) => {
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            element.style.top = (element.offsetTop - pos2) + "px";
+            element.style.left = (element.offsetLeft - pos1) + "px";
+        };
+    }
+
+    function adjustLayer(dir) {
+        if(!activeItem) return;
+        let currentZ = parseInt(activeItem.style.zIndex);
+        activeItem.style.zIndex = dir === 'up' ? currentZ + 1 : currentZ - 1;
+    }
+
+    function removeItem() {
+        if(!activeItem) return;
+        activeItem.remove();
+        activeItem = null;
+        document.getElementById('layer-controls').style.display = 'none';
+        if(document.querySelectorAll('.stacked-item').length === 0) {
+            document.getElementById('empty-state').style.display = 'block';
+        }
+    }
+
+    function clearStage() {
+        document.querySelectorAll('.stacked-item').forEach(el => el.remove());
+        document.getElementById('empty-state').style.display = 'block';
+        document.getElementById('layer-controls').style.display = 'none';
+        activeItem = null;
+    }
+
+    // Click outside to deselect
+    document.getElementById('stage').onclick = () => {
+        if(activeItem) activeItem.style.outline = 'none';
+        activeItem = null;
+        document.getElementById('layer-controls').style.display = 'none';
+    };
+</script>
+{% endblock %}

@@ -5,11 +5,13 @@ Handles: login, register, logout, survey, survey submit, dashboard.
 
 import sys
 import os
+import random
 import json
 
 import numpy as np
 
-from .models import SwipeResponse, JewelryCatalog, PreferenceResult
+
+from .models import SwipeResponse, JewelryCatalog, PreferenceResult,SwipeSession
 
 # Allow imports from project root (for models/)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -143,97 +145,311 @@ def survey_submit_view(request):
 
 # ── Swipe Interface ─────────────────────────────────────────────────────────────
 
+
+# FIXED version
+
+
 @login_required
 def swipe_view(request):
-    """Render the swipe matching interface."""
-    return render(request, "preference_app/swipe.html")
-
-@login_required
-def swipe_images_api(request):
-    """Returns 20 randomized jewelry images for the user to swipe."""
-    import random
-    
-    all_items = list(JewelryCatalog.objects.all().values("id", "name", "image_url", "item_type", "style"))
-    if len(all_items) > 20:
-        samples = random.sample(all_items, 20)
-    else:
-        samples = all_items
-        
-    return JsonResponse({"items": samples})
-
-@login_required
-@require_POST
-def swipe_submit_view(request):
-    """
-    Handle AJAX swipe submission (liked and disliked IDs).
-    Fuses the visual scores into the existing preference record.
-    """
-    try:
-        body = json.loads(request.body)
-        liked_ids = body.get("liked_ids", [])
-        disliked_ids = body.get("disliked_ids", [])
-    except (json.JSONDecodeError, KeyError):
-        return JsonResponse({"error": "Invalid payload."}, status=400)
-
-    user = request.user
-    
-    # 1. Log responses
-    session = SwipeSession.objects.create(user=user)
-    
-    likes = JewelryCatalog.objects.filter(id__in=liked_ids)
-    for item in likes:
-        SwipeResponse.objects.create(session=session, item=item, action="like")
-        
-    dislikes = JewelryCatalog.objects.filter(id__in=disliked_ids)
-    for item in dislikes:
-        SwipeResponse.objects.create(session=session, item=item, action="dislike")
-        
-    # 2. Score Fusion
-    # Retrieve existing survey answers (or empty if none)
-    likert_answers = {}
-    user_responses = Response.objects.filter(user=user)
-    
-    for r in user_responses:
-        trait = r.question.category
-        if trait not in likert_answers:
-            likert_answers[trait] = []
-        likert_answers[trait].append(float(r.answer))
-        
-    # Fuse base survey + swipe likes
-    result = score_and_recommend(likert_answers, None, liked_ids)
-    
-    # Save / update preference result
-    PreferenceResult.objects.update_or_create(
-        user=user,
-        defaults={
-            "style_score":     result["style"],
-            "material_score":  result["material"],
-            "occasion_score":  result["occasion"],
-            "aesthetic_score": result["aesthetic"],
-            "budget_score":    result["budget"],
-            "jewelry_persona": result["persona"],
-            "recommendations": result["recommendations"],
-        },
+    # Get all catalog items that have an image URL
+    items = list(
+        JewelryCatalog.objects
+        .exclude(image_url__isnull=True)
+        .exclude(image_url__exact='')
+        .values('id', 'name', 'item_type', 'image_url', 'material', 'price_range')
     )
 
-    return JsonResponse({"ok": True, "results": result})
+    # Shuffle so each session feels fresh
+    random.shuffle(items)
+
+    # Limit to 20 items for the swipe session
+    items = items[:20]
+
+    return render(request, 'preference_app/swipe.html', {
+        'items_json': json.dumps(items),   # for JavaScript
+        'items':      items,               # for Django template
+        'total':      len(items)
+    })
 
 
+
+
+@login_required
+def submit_swipe(request):
+    if request.method != 'POST':
+        return redirect('swipe')
+
+    try:
+        swipe_data = json.loads(request.POST.get('swipe_data', '[]'))
+
+        # Get or create a swipe session for this user
+        session = SwipeSession.objects.create(user=request.user)
+
+        # Save each swipe response
+        for entry in swipe_data:
+            try:
+                item = JewelryCatalog.objects.get(id=entry['item_id'])
+                SwipeResponse.objects.create(
+                    session=session,
+                    item=item,
+                    action=entry['action']   # 'like' or 'dislike'
+                )
+            except JewelryCatalog.DoesNotExist:
+                continue
+
+        # Redirect to dashboard after swipe complete
+        return redirect('dashboard')
+
+    except Exception as e:
+        return redirect('swipe')
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 
 @login_required
 def dashboard_view(request):
-    """Display OCEAN results and recommendations."""
     try:
         result = request.user.preference_result
     except PreferenceResult.DoesNotExist:
         messages.warning(request, "You haven't taken the survey yet.")
         return redirect("survey")
 
+    # ── Sidebar Items ──
+    sidebar_items = [
+        {"id": "analysis",        "label": "Analysis",          "icon": "📊"},
+        {"id": "tryon",           "label": "Virtual Try-On",    "icon": "✨"},
+        {"id": "wishlist",        "label": "Wishlist",          "icon": "♥"},
+        {"id": "occasion",        "label": "Occasion Filter",   "icon": "🔍"},
+        {"id": "style-profile",   "label": "Style Profile",     "icon": "👤"},
+        {"id": "recommendations", "label": "AI Recommendations", "icon": "🎯"},
+        {"id": "personalisation", "label": "Personalisation",   "icon": "🧬"},
+    ]
+
+    # ── Traits for Radar Chart / Detail ──
+    def get_trait_metadata(label, value):
+        meta = {
+            "Style": {
+                "desc": "Expression Level",
+                "high": "Bold & Expressive. You gravitate towards pieces that command attention.",
+                "low": "Understated Elegance. You prefer delicate, subtle designs.",
+                "mid": "Versatile Chic. You balance statement pieces with daily essentials."
+            },
+            "Material": {
+                "desc": "Quality Priority",
+                "high": "Premium Connoisseur. You prioritize purity of metals and stones.",
+                "low": "Creative Alchemist. You value the 'vibe' more than raw material value.",
+                "mid": "Quality Conscious. You look for a balance of durability and design."
+            },
+            "Occasion": {
+                "desc": "Usage Context",
+                "high": "Intentional Stylist. Pieces are selected for specific life moments.",
+                "low": "Seamless Versatility. You look for jewelry that works all day.",
+                "mid": "Adaptive Wearer. You have a mix of daily and event-specific pieces."
+            },
+            "Aesthetic": {
+                "desc": "Visual Theme",
+                "high": "Cultivated Theme. Your collection follows a strong visual narrative.",
+                "low": "Eclectic Collector. You enjoy mixing different visual eras.",
+                "mid": "Modern Fusion. You appreciate classic roots with contemporary twists."
+            },
+            "Budget": {
+                "desc": "Value Focus",
+                "high": "Investment Minded. You favor legacy, designer, and custom pieces.",
+                "low": "Accessibly Trendy. You enjoy rotating collections and fresh styles.",
+                "mid": "Value Finder. You seek the best quality at a justifiable price point."
+            }
+        }
+        t = meta.get(label, {})
+        insight = t["mid"]
+        if value > 65: insight = t["high"]
+        elif value < 35: insight = t["low"]
+        return t.get("desc", ""), insight
+
+    traits = []
+    trait_configs = [
+        ("Style",     "#818cf8", "✨"),
+        ("Material",  "#34d399", "💎"),
+        ("Occasion",  "#fbbf24", "🎉"),
+        ("Aesthetic", "#f472b6", "🎨"),
+        ("Budget",    "#f87171", "💰"),
+    ]
+    
+    for label, color, icon in trait_configs:
+        val = getattr(result, f"{label.lower()}_score", 0)
+        desc, insight = get_trait_metadata(label, val)
+        traits.append({
+            "label": label,
+            "value": val,
+            "color": color,
+            "icon": icon,
+            "desc": desc,
+            "insight": insight
+        })
+
+    # ── Try-On & Recommendations ──
+    persona = result.jewelry_persona or ""
+    if "Bridal" in persona:
+        tryon_items = JewelryCatalog.objects.filter(occasion="Bridal").exclude(image_url="")[:12]
+    elif "Minimalist" in persona:
+        tryon_items = JewelryCatalog.objects.filter(style="Minimalist").exclude(image_url="")[:12]
+    else:
+        tryon_items = JewelryCatalog.objects.exclude(image_url="").order_by('?')[:12]
+
+    # AI Recs - combine persona with manual preferences
+    style_pref = result.style_aesthetic or (persona.split()[-1] if persona else "Minimalist")
+    material_pref = result.metal_preference or "Gold"
+    
+    ai_recommendations = JewelryCatalog.objects.filter(
+        style__icontains=style_pref
+    ).exclude(image_url="")
+    
+    if material_pref:
+        ai_recommendations = ai_recommendations.filter(material__icontains=material_pref)
+        
+    ai_recommendations = ai_recommendations.order_by('?')[:10]
+    
+    if not ai_recommendations.exists():
+        ai_recommendations = JewelryCatalog.objects.exclude(image_url="").order_by('?')[:10]
+
+    # ── Wishlist ──
+    from .models import Wishlist
+    wishlist_items = Wishlist.objects.filter(user=request.user).select_related('item')
+
+    # ── Occasion Filter ──
+    occasions = JewelryCatalog.objects.values_list('occasion', flat=True).distinct()
+    all_items = JewelryCatalog.objects.exclude(image_url="").order_by('?')[:40]
+
+    # ── Personalisation Feed ──
+    feed_items = JewelryCatalog.objects.exclude(image_url="").order_by('?')[:15]
+
     return render(request, "preference_app/dashboard.html", {
-        "result":       result,
-        "result_json":  json.dumps(result.as_dict()),
+        "result":             result,
+        "result_json":        json.dumps(result.as_dict()),
+        "sidebar_items":      sidebar_items,
+        "traits":             traits,
+        "tryon_items":        tryon_items,
+        "wishlist_items":     wishlist_items,
+        "ai_recommendations": ai_recommendations,
+        "occasions":          occasions,
+        "all_items":          all_items,
+        "feed_items":         feed_items,
     })
+
+
+@login_required
+@require_POST
+def wishlist_toggle(request):
+    """AJAX view to add/remove item from wishlist."""
+    try:
+        data = json.loads(request.body)
+        item_id = data.get("item_id")
+        from .models import Wishlist, JewelryCatalog
+        item = JewelryCatalog.objects.get(id=item_id)
+        
+        wish, created = Wishlist.objects.get_or_create(user=request.user, item=item)
+        if not created:
+            wish.delete()
+            return JsonResponse({"ok": True, "added": False})
+        
+        return JsonResponse({"ok": True, "added": True})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+# ── Phase 2: Separate Pages ───────────────────────────────────────────────────
+
+@login_required
+def look_builder_view(request):
+    items = JewelryCatalog.objects.exclude(image_url="").order_by('item_type')
+    
+    # Group items by type for the sidebar
+    categorized = {}
+    for item in items:
+        rtype = item.item_type or "Jewelry"
+        if rtype not in categorized:
+            categorized[rtype] = []
+        categorized[rtype].append(item)
+        
+    return render(request, "preference_app/look_builder.html", {
+        "title": "Look Builder",
+        "categorized": categorized
+    })
+
+@login_required
+def gallery_view(request):
+    # Simulated community posts using catalog items
+    items = JewelryCatalog.objects.exclude(image_url="").order_by('?')[:15]
+    posts = []
+    users = ["@aura_jewelry", "@luxe_vibe", "@gold_standard", "@minimalist_me", "@bridal_glow"]
+    
+    for i, item in enumerate(items):
+        posts.append({
+            "user": users[i % len(users)],
+            "image": item.image_url,
+            "product": item.name,
+            "likes": (i + 1) * 42,
+            "tag": item.occasion or "Daily Wear"
+        })
+        
+    return render(request, "preference_app/gallery.html", {
+        "title": "Community Gallery",
+        "posts": posts
+    })
+
+@login_required
+def fit_guide_view(request):
+    return render(request, "preference_app/fit_guide.html", {"title": "Fit & Size Guide"})
+
+@login_required
+def gifting_view(request):
+    # Recipient style quiz questions
+    questions = [
+        {"id": "vibe", "text": "What's their overall vibe?", "options": ["Classic & Timeless", "Bold & Statement", "Minimalist & Subtle"]},
+        {"id": "metal", "text": "Favorite metal color?", "options": ["Yellow Gold", "Rose Gold", "Silver/Platinum"]},
+        {"id": "occasion", "text": "What's the occasion?", "options": ["Anniversary", "Birthday", "Just Because"]}
+    ]
+    
+    # Pre-fetch some "giftable" items
+    gift_items = JewelryCatalog.objects.exclude(image_url="").order_by('?')[:6]
+    
+    return render(request, "preference_app/gifting.html", {
+        "title": "Gifting Tools",
+        "questions": questions,
+        "gift_items": gift_items
+    })
+
+@login_required
+def post_purchase_view(request):
+    # Simulated orders from wishlist/catalog
+    orders = JewelryCatalog.objects.exclude(image_url="").order_by('?')[:2]
+    
+    # Care guides
+    care_guides = [
+        {"id": "gold", "title": "Caring for Gold", "icon": "✨", "desc": "Keep your gold pieces sparkling with a soft cloth and warm water."},
+        {"id": "gem", "title": "Gemstone Safety", "icon": "💎", "desc": "Avoid harsh chemicals when wearing emeralds or pearls."},
+        {"id": "storage", "title": "Safe Storage", "icon": "📦", "desc": "Store pieces separately to prevent scratching and tangling."}
+    ]
+    
+    return render(request, "preference_app/post_purchase.html", {
+        "title": "Post-Purchase Hub",
+        "orders": orders,
+        "care_guides": care_guides
+    })
+
+
+@login_required
+@require_POST
+def save_style_profile(request):
+    """AJAX view to save manual style preferences."""
+    try:
+        data = json.loads(request.body)
+        result = request.user.preference_result
+        result.metal_preference = data.get("metal", "")
+        result.style_aesthetic  = data.get("aesthetic", "")
+        result.stone_preference = data.get("stone", "")
+        result.save()
+        return JsonResponse({"ok": True})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 # ── Static Pages ──────────────────────────────────────────────────────────────
@@ -314,31 +530,62 @@ def tryon_api_view(request):
     Expects: user_photo (file), item_id (int), item_type (string)
     """
     try:
+        from preference_app.tryon_engine import process_tryon
+        import os
+
         user_photo = request.FILES.get("photo")
         item_id    = request.POST.get("item_id")
         item_type  = request.POST.get("item_type")
-        
+
+        print(f"[TryOn Debug] item_id={item_id}  item_type={item_type}")
+        print(f"[TryOn Debug] photo received: {user_photo}")
+
         if not user_photo:
             return JsonResponse({"error": "No photo uploaded"}, status=400)
-            
+
+        print(f"[TryOn Debug] photo name={user_photo.name}  size={user_photo.size} bytes")
+
+        # Save photo to disk
         from django.conf import settings
-        import os
-        
-        # Save temp user photo
-        path = default_storage.save(f"tmp/tryon_input_{request.user.id}.jpg", ContentFile(user_photo.read()))
+        path      = default_storage.save(
+            f"tmp/tryon_input_{request.user.id}.jpg",
+            ContentFile(user_photo.read())
+        )
         full_path = os.path.join(settings.MEDIA_ROOT, path)
-        
-        # Process AR
+
+        print(f"[TryOn Debug] saved to: {full_path}")
+        print(f"[TryOn Debug] file exists: {os.path.exists(full_path)}")
+        print(f"[TryOn Debug] file size on disk: {os.path.getsize(full_path)} bytes")
+
+        # Test if OpenCV can read it
+        import cv2
+        img = cv2.imread(full_path)
+        if img is None:
+            print("[TryOn Debug] ❌ OpenCV CANNOT read the image")
+            return JsonResponse({"error": "Image could not be read by OpenCV. Try a JPG or PNG file."}, status=400)
+        else:
+            print(f"[TryOn Debug] ✅ OpenCV read OK — shape: {img.shape}")
+
+        # Run try-on
         result_path = process_tryon(full_path, item_id, item_type)
-        
+
+        print(f"[TryOn Debug] result_path={result_path}")
+
         if result_path:
             relative_url = f"{settings.MEDIA_URL}tryon/{os.path.basename(result_path)}"
             return JsonResponse({"result_url": relative_url})
         else:
-            return JsonResponse({"error": "Failed to detect landmarks. Please ensure your face/hand is clearly visible."}, status=400)
-            
+            return JsonResponse({
+                "error": "Could not detect face/hand. Please use a clear front-facing photo."
+            }, status=400)
+
+    except ModuleNotFoundError as e:
+        return JsonResponse({"error": f"Try-on service unavailable: {e}"}, status=503)
     except Exception as e:
+        import traceback
+        print(f"[TryOn Debug] EXCEPTION: {traceback.format_exc()}")
         return JsonResponse({"error": str(e)}, status=500)
+
 
 # In preference_app/views.py
 

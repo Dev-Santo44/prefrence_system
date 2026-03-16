@@ -79,35 +79,95 @@
 {% endblock %}
 
 {% block content %}
+<!-- In templates/preference_app/swipe.html -->
 
-<div class="container" style="margin-top: 40px;">
-    <div class="visible" style="text-align: center; margin-bottom: 40px;" data-animate>
-        <h1 style="margin-bottom: 12px;">Visual <span class="gradient-text">Matching</span></h1>
-        <p>Refine your profile by swiping on items you find appealing.</p>
-    </div>
-
-    <!-- Progress -->
-    <div class="visible" style="max-width: 360px; margin: 0 auto 24px; transition-delay: 0.1s;" data-animate>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.75rem; font-weight: 700; color: var(--text-dim);">
-            <span id="progress-text">0 / 20 ITEMS</span>
-            <span id="progress-pct-text">0%</span>
-        </div>
-        <div class="progress-bar-outer" style="height: 4px;">
-            <div id="progress-bar" class="progress-bar-inner" style="width: 0%;"></div>
-        </div>
-    </div>
-
-    <!-- Card Stack -->
-    <div class="swipe-stage visible" id="swipe-container" style="transition-delay: 0.2s;" data-animate>
-        <!-- Cards injected via JS -->
-    </div>
-
-    <!-- Actions -->
-    <div class="visible" style="display: flex; justify-content: center; gap: 24px; margin-top: 32px; transition-delay: 0.3s;" data-animate>
-        <button class="btn btn-outline" onclick="handleAction(false)" style="width: 70px; height: 70px; border-radius: 50%; font-size: 1.5rem;">✕</button>
-        <button class="btn btn-primary" onclick="handleAction(true)" style="width: 70px; height: 70px; border-radius: 50%; font-size: 1.5rem;">❤</button>
-    </div>
+<!-- Card container -->
+<div id="swipe-container" style="position:relative; width:320px; height:420px; margin:auto;">
+    <div id="card-stack"></div>
+    <p id="progress-text" style="text-align:center; margin-top:10px;">
+        Loading...
+    </p>
 </div>
+
+<!-- Like / Dislike buttons -->
+<div style="text-align:center; margin-top:20px;">
+    <button onclick="swipe('dislike')" 
+            style="background:#e74c3c; color:white; padding:12px 30px; 
+                   border:none; border-radius:25px; font-size:16px; cursor:pointer; margin:5px;">
+        ✕ Dislike
+    </button>
+    <button onclick="swipe('like')" 
+            style="background:#27ae60; color:white; padding:12px 30px; 
+                   border:none; border-radius:25px; font-size:16px; cursor:pointer; margin:5px;">
+        ♥ Like
+    </button>
+</div>
+
+<!-- Hidden form to submit results -->
+<form id="swipe-form" method="POST" action="{% url 'submit_swipe' %}">
+    {% csrf_token %}
+    <input type="hidden" name="swipe_data" id="swipe-data-input">
+</form>
+
+<script>
+    // Items passed from Django view
+    const items  = {{ items_json|safe }};
+    let current  = 0;
+    let responses = [];
+
+    function showCard(index) {
+        const stack = document.getElementById('card-stack');
+        const prog  = document.getElementById('progress-text');
+
+        if (index >= items.length) {
+            // All items swiped — auto-submit
+            document.getElementById('swipe-data-input').value = JSON.stringify(responses);
+            document.getElementById('swipe-form').submit();
+            return;
+        }
+
+        const item = items[index];
+        prog.textContent = `${index + 1} of ${items.length}`;
+
+        stack.innerHTML = `
+            <div style="background:white; border-radius:16px; 
+                        box-shadow:0 4px 20px rgba(0,0,0,0.15); 
+                        overflow:hidden; width:320px;">
+                <img src="${item.image_url}" 
+                     alt="${item.name}"
+                 onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=300&auto=format'"
+                     style="width:100%; height:280px; object-fit:cover;">
+                <div style="padding:16px;">
+                    <h3 style="margin:0 0 4px 0;">${item.name}</h3>
+                    <p style="margin:0; color:#666; font-size:14px;">
+                        ${item.item_type} · ${item.material} · ${item.price_range}
+                    </p>
+                </div>
+            </div>`;
+    }
+
+    function swipe(action) {
+        if (current >= items.length) return;
+        
+        // Record this swipe
+        responses.push({
+            item_id: items[current].id,
+            action:  action
+        });
+        
+        current++;
+        showCard(current);
+    }
+
+    // Keyboard shortcuts: ArrowRight = like, ArrowLeft = dislike
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') swipe('like');
+        if (e.key === 'ArrowLeft')  swipe('dislike');
+    });
+
+    // Start
+    showCard(0);
+</script>
 {% endblock %}
 
 

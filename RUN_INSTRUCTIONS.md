@@ -56,12 +56,29 @@ pip install -r requirements.txt
     > Replace `your_mysql_password` with your actual MySQL root password.
 
 ### 5. Run Database Migrations
-Initialize the database schema:
+Initialize the system tables:
 ```bash
+python manage.py makemigrations preference_app
 python manage.py migrate
 ```
 
-### 6. Start the Development Server
+### 6. Seed Initial Data (SQL)
+To populate the survey questions and basic configuration, run the following SQL script in MySQL Workbench or via command line:
+1.  Target Database: `preference_db`
+2.  Run file: `database/seed_questions.sql`
+
+Alternatively, via command line:
+```bash
+mysql -u root -p preference_db < database/seed_questions.sql
+```
+
+### 7. Create Admin Account
+Create a staff account to access the admin dashboard:
+```bash
+python manage.py createsuperuser
+```
+
+### 8. Start the Development Server
 Run the project:
 ```bash
 python manage.py runserver

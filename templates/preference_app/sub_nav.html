@@ -1,0 +1,17 @@
+<div class="sub-nav-container">
+    <a href="{% url 'dashboard' %}" class="sub-nav-link">
+        <span>🏠</span> Dashboard
+    </a>
+    <a href="{% url 'look_builder' %}" class="sub-nav-link {% if 'look-builder' in request.path %}active{% endif %}">
+        <span>👗</span> Look Builder
+    </a>
+    <a href="{% url 'gallery' %}" class="sub-nav-link {% if 'gallery' in request.path %}active{% endif %}">
+        <span>🖼</span> Community Gallery
+    </a>
+    <a href="{% url 'fit_guide' %}" class="sub-nav-link {% if 'fit-guide' in request.path %}active{% endif %}">
+        <span>📏</span> Fit & Size Guide
+    </a>
+    <a href="{% url 'gifting' %}" class="sub-nav-link {% if 'gifting' in request.path %}active{% endif %}">
+        <span>🎁</span> Gifting Tools
+    </a>
+</div>

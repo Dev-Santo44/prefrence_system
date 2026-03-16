@@ -1,0 +1,143 @@
+{% extends "preference_app/base.html" %}
+{% block title %}{{ title }} — PreferenceAI{% endblock %}
+{% block content %}
+{% include "preference_app/sub_nav.html" %}
+<style>
+    .gifting-container {
+        max-width: 900px;
+        margin: 20px auto 100px;
+    }
+    .quiz-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 32px;
+        padding: 50px;
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .quiz-step {
+        display: none;
+    }
+    .quiz-step.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+    }
+    .option-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 30px;
+    }
+    .gift-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 24px;
+        margin-top: 40px;
+        display: none;
+    }
+    .gift-item {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 24px;
+        padding: 20px;
+        text-align: center;
+        border: 1px solid transparent;
+        transition: all 0.3s;
+    }
+    .gift-item:hover {
+        border-color: var(--accent-primary);
+        transform: translateY(-5px);
+    }
+    .gift-item img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        border-radius: 16px;
+        margin-bottom: 15px;
+    }
+    .progress-bar {
+        height: 6px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 3px;
+        margin-bottom: 40px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+        width: 0%;
+        transition: width 0.3s;
+    }
+</style>
+
+<div class="gifting-container">
+    <div class="quiz-card" id="quiz-container">
+        <h2 class="gradient-text" style="font-size: 2.5rem; margin-bottom: 10px;">The Perfect Gift Finder</h2>
+        <p class="text-gray" id="quiz-subtitle">Answer 3 quick questions about the recipient</p>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+
+        {% for question in questions %}
+        <div class="quiz-step {% if forloop.first %}active{% endif %}" id="step-{{ forloop.counter0 }}">
+            <h3 style="margin-bottom: 20px;">{{ question.text }}</h3>
+            <div class="option-buttons">
+                {% for option in question.options %}
+                <button class="btn btn-outline" style="border-radius: 15px; padding: 15px;" onclick="nextStep({{ forloop.parentloop.counter0 }})">
+                    {{ option }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <div id="results" style="display: none;">
+            <div style="font-size: 4rem; margin-bottom: 20px;">✨</div>
+            <h3 class="gradient-text">Top Gift Matches</h3>
+            <p class="text-gray">Based on their style profile, we recommend these pieces:</p>
+            
+            <div class="gift-grid" id="gift-grid" style="display: grid;">
+                {% for item in gift_items %}
+                <div class="gift-item">
+                    <img src="{{ item.image_url }}" alt="{{ item.name }}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=300&auto=format'">
+                    <div style="font-weight: 500;">{{ item.name }}</div>
+                    <div style="color: var(--accent-primary); margin-top: 5px;">${{ item.price|default:"129" }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button class="btn btn-primary" style="margin-top: 30px;" onclick="resetQuiz()">Find More Gifts</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentStep = 0;
+    const totalSteps = {{ questions|length }};
+
+    function nextStep(stepIndex) {
+        document.getElementById(`step-${stepIndex}`).classList.remove('active');
+        currentStep++;
+        
+        const progress = (currentStep / totalSteps) * 100;
+        document.getElementById('progress').style.width = `${progress}%`;
+
+        if (currentStep < totalSteps) {
+            document.getElementById(`step-${currentStep}`).classList.add('active');
+        } else {
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('quiz-subtitle').textContent = 'Curated selection ready!';
+        }
+    }
+
+    function resetQuiz() {
+        currentStep = 0;
+        document.getElementById('progress').style.width = '0%';
+        document.getElementById('results').style.display = 'none';
+        document.getElementById('quiz-subtitle').textContent = 'Answer 3 quick questions about the recipient';
+        document.querySelectorAll('.quiz-step').forEach(s => s.classList.remove('active'));
+        document.getElementById('step-0').classList.add('active');
+    }
+</script>
+{% endblock %}
