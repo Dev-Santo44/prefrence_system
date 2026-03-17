@@ -1,0 +1,285 @@
+{% extends "preference_app/base.html" %}
+{% load static %}
+
+{% block title %}Explore Jewelry Collection — PreferenceAI{% endblock %}
+
+{% block extra_head %}
+<style>
+  .explore-container {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 40px;
+    padding: 120px 40px 60px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* ── Sidebar Filters ── */
+  .filters-sidebar {
+    position: sticky;
+    top: 120px;
+    height: fit-content;
+  }
+
+  .filter-group {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--glass-stroke);
+  }
+
+  .filter-group h4 {
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+  }
+
+  .filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .filter-item {
+    color: var(--text-gray);
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+    cursor: pointer;
+  }
+
+  .filter-item:hover, .filter-item.active {
+    color: var(--accent-primary);
+  }
+
+  /* ── Main content ── */
+  .catalog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+  }
+
+  .search-box {
+    position: relative;
+    max-width: 400px;
+    width: 100%;
+  }
+
+  .search-box input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-stroke);
+    border-radius: 100px;
+    padding: 12px 25px;
+    color: white;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-box input:focus {
+    border-color: var(--accent-primary);
+  }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 30px;
+  }
+
+  .product-card {
+    background: var(--bg-card);
+    border: 1px solid var(--glass-stroke);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s var(--ease-premium);
+  }
+
+  .product-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--accent-primary);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  }
+
+  .product-img-wrapper {
+    aspect-ratio: 1/1;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .product-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s var(--ease-premium);
+  }
+
+  .product-card:hover .product-img-wrapper img {
+    transform: scale(1.1);
+  }
+
+  .product-info {
+    padding: 20px;
+  }
+
+  .product-name {
+    font-weight: 600;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .product-category {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+
+  .product-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .price {
+    font-weight: 800;
+    color: var(--accent-secondary);
+  }
+
+  @media (max-width: 1000px) {
+    .explore-container {
+      grid-template-columns: 1fr;
+    }
+    .filters-sidebar {
+      position: static;
+      display: flex;
+      overflow-x: auto;
+      gap: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--glass-stroke);
+    }
+    .filter-group {
+      min-width: 150px;
+      margin-bottom: 0;
+      border-bottom: none;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="explore-container">
+  
+  <!-- Sidebar -->
+  <aside class="filters-sidebar">
+    <div class="filter-group">
+      <h4>Categories</h4>
+      <div class="filter-options">
+        <a href="?type=&material={{ current_filters.material }}&occasion={{ current_filters.occasion }}&sort={{ current_filters.sort }}" 
+           class="filter-item {% if not current_filters.type %}active{% endif %}">All Items</a>
+        {% for t in types %}
+        <a href="?type={{ t }}&material={{ current_filters.material }}&occasion={{ current_filters.occasion }}&sort={{ current_filters.sort }}" 
+           class="filter-item {% if current_filters.type == t %}active{% endif %}">{{ t }}</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <h4>Material</h4>
+      <div class="filter-options">
+        <a href="?type={{ current_filters.type }}&material=&occasion={{ current_filters.occasion }}&sort={{ current_filters.sort }}" 
+           class="filter-item {% if not current_filters.material %}active{% endif %}">All Materials</a>
+        {% for m in materials %}
+        <a href="?type={{ current_filters.type }}&material={{ m }}&occasion={{ current_filters.occasion }}&sort={{ current_filters.sort }}" 
+           class="filter-item {% if current_filters.material == m %}active{% endif %}">{{ m }}</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <h4>Occasion</h4>
+      <div class="filter-options">
+        <a href="?type={{ current_filters.type }}&material={{ current_filters.material }}&occasion=&sort={{ current_filters.sort }}" 
+           class="filter-item {% if not current_filters.occasion %}active{% endif %}">Any Occasion</a>
+        {% for o in occasions %}
+        <a href="?type={{ current_filters.type }}&material={{ current_filters.material }}&occasion={{ o }}&sort={{ current_filters.sort }}" 
+           class="filter-item {% if current_filters.occasion == o %}active{% endif %}">{{ o }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Catalog -->
+  <main class="catalog-main">
+    <div class="catalog-header">
+      <div class="search-box">
+        <form method="GET">
+          <input type="text" name="q" placeholder="Search jewelry..." value="{{ current_filters.q }}">
+          <input type="hidden" name="type" value="{{ current_filters.type }}">
+          <input type="hidden" name="material" value="{{ current_filters.material }}">
+          <input type="hidden" name="occasion" value="{{ current_filters.occasion }}">
+          <input type="hidden" name="sort" value="{{ current_filters.sort }}">
+        </form>
+      </div>
+      
+      <div class="sort-dropdown">
+        <select onchange="location = this.value;" class="btn btn-outline" style="background: transparent; color: white; border: 1px solid var(--glass-stroke);">
+          <option value="?q={{ current_filters.q }}&type={{ current_filters.type }}&sort=newest" {% if current_filters.sort == 'newest' %}selected{% endif %}>Newest First</option>
+          <option value="?q={{ current_filters.q }}&type={{ current_filters.type }}&sort=price_low" {% if current_filters.sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+          <option value="?q={{ current_filters.q }}&type={{ current_filters.type }}&sort=price_high" {% if current_filters.sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="product-grid">
+      {% for item in items %}
+      <div class="product-card" data-animate>
+        <div class="product-img-wrapper">
+          <img src="{{ item.image_url }}" alt="{{ item.name }}" loading="lazy">
+        </div>
+        <div class="product-info">
+          <div class="product-category">{{ item.item_type }} • {{ item.material }}</div>
+          <div class="product-name" title="{{ item.name }}">{{ item.name }}</div>
+          <div class="product-footer">
+            <div class="price">₹{{ item.price }}</div>
+            <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem;" onclick="viewProduct({{ item.id|escapejs }}, '{{ item.product_link|escapejs }}')">Quick View</button>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div style="text-align: center; padding: 100px; grid-column: 1/-1;">
+        <h3 style="color: var(--text-dim);">No items match your filters.</h3>
+        <p>Try resetting the categories or searching for something else.</p>
+        <a href="{% url 'explore' %}" class="btn btn-primary" style="margin-top: 20px;">Show All Jewelry</a>
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+
+</div>
+
+<script>
+// Simple reveal animation
+document.addEventListener('DOMContentLoaded', () => {
+  const cards = document.querySelectorAll('[data-animate]');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  cards.forEach(card => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    card.style.transition = 'all 0.6s var(--ease-premium)';
+    observer.observe(card);
+  });
+});
+</script>
+{% endblock %}

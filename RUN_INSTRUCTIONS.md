@@ -85,12 +85,24 @@ If you prefer to run them one-by-one:
     python populate_jewelry_questions.py
     ```
 
-4.  **Generate Product Catalog**:
+4.  **Generate Product Catalog (Legacy)**:
     ```bash
     python generate_catalog.py
     ```
 
-5.  **Precompute AI Features**:
+5.  **Import Premium Jewelry Catalog (New)**:
+    To add the latest 270+ premium jewelry items from the SQL backup, run:
+    ```bash
+    python import_jewelry_from_sql.py
+    ```
+
+6.  **Synchronize Diverse Product Images**:
+    To map the local diverse image dataset (`media/products`) to the catalog items, run:
+    ```bash
+    python update_images.py
+    ```
+
+7.  **Precompute AI Features**:
     ```bash
     python precompute_catalog_features.py
     ```

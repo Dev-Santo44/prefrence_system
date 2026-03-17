@@ -16,11 +16,17 @@ def precompute_features():
     start_time = time.time()
     processed = 0
     
+    from django.conf import settings
+    
     for item in items:
         if not item.image_url:
             continue
             
-        features = extract_features(item.image_url)
+        # Transform /media/path to absolute path
+        rel_path = item.image_url.replace(settings.MEDIA_URL, "", 1).lstrip("/")
+        abs_path = os.path.join(settings.MEDIA_ROOT, rel_path)
+        
+        features = extract_features(abs_path)
         if features is not None:
             # Store as list in JSONField
             item.visual_features = features.tolist()

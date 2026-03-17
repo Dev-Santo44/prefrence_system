@@ -36,7 +36,13 @@ urlpatterns = [
     path('post-purchase/', views.post_purchase_view,    name='post_purchase'),
     path('style-profile/save/', views.save_style_profile, name='save_style_profile'),
 
+    # ── APIs ─────────────────────────────────────────
+    path('api/view-product/<int:product_id>/', views.view_product_api, name='view_product_api'),
+    path('api/product-detail/<int:product_id>/', views.product_detail_api, name='product_detail_api'),
+
     # ── Static Pages ─────────────────────────────────
     path('about/',         views.about_view,           name='about'),
     path('contact/',       views.contact_view,         name='contact'),
+    path('explore/',       views.explore_view,         name='explore'),
+    path('trending/',      views.trending_view,        name='trending'),
 ]

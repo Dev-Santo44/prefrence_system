@@ -214,3 +214,19 @@ class Wishlist(models.Model):
 
     def __str__(self):
         return f"{self.user.name} ♥ {self.item.name}"
+
+
+# ── Recently Viewed ──────────────────────────────────────────────────────────
+
+class RecentlyViewed(models.Model):
+    user      = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="viewed_items")
+    item      = models.ForeignKey(JewelryCatalog, on_delete=models.CASCADE)
+    viewed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "recently_viewed"
+        ordering = ["-viewed_at"]
+        unique_together = ("user", "item")
+
+    def __str__(self):
+        return f"{self.user.name} viewed {self.item.name}"

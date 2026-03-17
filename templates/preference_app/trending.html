@@ -1,0 +1,366 @@
+{% extends "preference_app/base.html" %}
+{% load static %}
+
+{% block title %}Trending Now — PreferenceAI{% endblock %}
+
+{% block extra_head %}
+<!-- Google Fonts: Outfit for a premium tech-jewelry feel -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #050510;
+    --accent-primary: #818cf8;
+    --accent-secondary: #c084fc;
+    --text-white: #ffffff;
+    --text-gray: rgba(255, 255, 255, 0.6);
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --card-bg: rgba(255, 255, 255, 0.05);
+  }
+
+  body { 
+    background: var(--bg-dark); 
+    font-family: 'Outfit', sans-serif;
+    color: var(--text-white);
+    margin: 0;
+  }
+
+  .trending-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px 40px;
+  }
+
+  /* ── Header Banner ── */
+  .trending-header {
+    text-align: center;
+    padding: 80px 20px;
+    margin-bottom: 50px;
+    background: radial-gradient(circle at center, rgba(129, 140, 248, 0.1) 0%, transparent 70%);
+  }
+
+  .trending-header h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 15px;
+  }
+
+  .trending-header p {
+    color: var(--text-gray);
+    font-size: 1.2rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* ── Live Market Rates ── */
+  .rates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 80px;
+  }
+
+  .rate-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+  }
+
+  .rate-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--glass-border);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .rate-info h3 {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    color: var(--text-gray);
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .rate-price {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0;
+    color: var(--text-white);
+  }
+
+  .rate-meta {
+    text-align: right;
+  }
+
+  .trend-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    gap: 5px;
+  }
+
+  .trend-up {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+
+  .trend-down {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  /* ── Product Grids ── */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+
+  .section-header h2 { font-size: 2rem; font-weight: 700; }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
+    margin-bottom: 80px;
+  }
+
+  .product-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .product-card:hover {
+    transform: translateY(-10px);
+    border-color: #fbbf24; /* Gold accent on hover */
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  }
+
+  .product-image {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    background: #000;
+  }
+
+  .product-info {
+    padding: 20px;
+  }
+
+  .product-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .product-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .product-price {
+    font-weight: 800;
+    font-size: 1.25rem;
+    color: #fbbf24; /* Premium Gold Color */
+  }
+
+  .btn-buy {
+    background: var(--glass-bg);
+    color: white;
+    border: 1px solid var(--glass-border);
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .btn-buy:hover {
+    background: #fbbf24;
+    color: black;
+    border-color: #fbbf24;
+  }
+
+  /* ── Editorial Blogs ── */
+  .blog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+    margin-bottom: 80px;
+  }
+
+  .blog-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    text-decoration: none;
+    color: white;
+    display: block;
+  }
+
+  .blog-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-primary);
+  }
+
+  .blog-image {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .blog-content {
+    padding: 25px;
+  }
+
+  .blog-meta {
+    font-size: 0.85rem;
+    color: var(--accent-primary);
+    margin-bottom: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .blog-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0 0 15px 0;
+    line-height: 1.3;
+  }
+
+  .blog-excerpt {
+    color: var(--text-gray);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="trending-container">
+  
+  <div class="trending-header">
+    <h1>The <span class="gradient-text">Pulse</span> of Elegance</h1>
+    <p>Live market insights, investment-grade gold features, and editorial inspiration to guide your collection.</p>
+  </div>
+
+  <!-- Live Market Rates -->
+  <div class="rates-grid">
+    <!-- 24K Gold -->
+    <div class="rate-card">
+      <div class="rate-info">
+        <h3>24K Gold (10g)</h3>
+        <p class="rate-price">₹{{ market_rates.gold_24k.price }}</p>
+      </div>
+      <div class="rate-meta">
+        <span class="trend-badge {% if market_rates.gold_24k.direction == 'up' %}trend-up{% else %}trend-down{% endif %}">
+          {% if market_rates.gold_24k.direction == 'up' %}📈{% else %}📉{% endif %} 
+          {{ market_rates.gold_24k.trend }}
+        </span>
+        <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: 10px;">Live MCX Rate</p>
+      </div>
+    </div>
+    
+    <!-- 22K Gold -->
+    <div class="rate-card">
+      <div class="rate-info">
+        <h3>22K Gold (10g)</h3>
+        <p class="rate-price">₹{{ market_rates.gold_22k.price }}</p>
+      </div>
+      <div class="rate-meta">
+        <span class="trend-badge {% if market_rates.gold_22k.direction == 'up' %}trend-up{% else %}trend-down{% endif %}">
+          {% if market_rates.gold_22k.direction == 'up' %}📈{% else %}📉{% endif %} 
+          {{ market_rates.gold_22k.trend }}
+        </span>
+        <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: 10px;">Standard Retail</p>
+      </div>
+    </div>
+
+    <!-- Silver -->
+    <div class="rate-card">
+      <div class="rate-info">
+        <h3>Silver (1kg)</h3>
+        <p class="rate-price">₹{{ market_rates.silver.price }}</p>
+      </div>
+      <div class="rate-meta">
+        <span class="trend-badge {% if market_rates.silver.direction == 'up' %}trend-up{% else %}trend-down{% endif %}">
+          {% if market_rates.silver.direction == 'up' %}📈{% else %}📉{% endif %} 
+          {{ market_rates.silver.trend }}
+        </span>
+        <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: 10px;">Live MCX Rate</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trending Gold Jewelry -->
+  <div class="section-header">
+    <h2>Premium <span style="color: #fbbf24;">Gold</span> Collection</h2>
+    <a href="{% url 'explore' %}?material=Gold" style="color: var(--accent-primary); font-size: 0.9rem; font-weight: 600;">View All Gold →</a>
+  </div>
+  
+  <div class="product-grid">
+    {% for item in trending_items %}
+    <div class="product-card">
+      <img src="{{ item.image_url }}" class="product-image" alt="{{ item.name }}" loading="lazy">
+      <div class="product-info">
+        <div class="product-name" title="{{ item.name }}">{{ item.name }}</div>
+        <div class="product-meta">
+          <div class="product-price">₹{{ item.price }}</div>
+          <button class="btn-buy" onclick="viewProduct({{ item.id|escapejs }}, '{{ item.product_link|escapejs }}')">Quick View</button>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-gray);">
+      <p>No gold items currently trending. Check back soon.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Editorial Section -->
+  <div class="section-header">
+    <h2>Editorial & <span class="gradient-text">Inspiration</span></h2>
+  </div>
+  
+  <div class="blog-grid">
+    {% for blog in blogs %}
+    <a href="#" class="blog-card">
+      <img src="{{ blog.image }}" class="blog-image" alt="{{ blog.title }}" loading="lazy">
+      <div class="blog-content">
+        <div class="blog-meta">{{ blog.date }} • {{ blog.read_time }}</div>
+        <h3 class="blog-title">{{ blog.title }}</h3>
+        <p class="blog-excerpt">{{ blog.excerpt }}</p>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
