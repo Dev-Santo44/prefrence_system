@@ -48,7 +48,6 @@
 {% block extra_scripts %}{% endblock %}
 
   <!-- Chatbot Widget -->
-  {% if user.is_authenticated %}
   <div class="chat-trigger" id="chat-trigger" title="Jewelry Advisor">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
   </div>
@@ -63,13 +62,11 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
-
     <div class="chat-history" id="chat-history">
       <div class="message-bubble message-bot">
-        Hello {{ user.name }}! ✨ I'm your AI Jewelry Advisor. How can I help you sparkle today?
+        Hello {% if user.is_authenticated %}{{ user.name }}{% else %}there{% endif %}! ✨ I'm your AI Jewelry Advisor. How can I help you sparkle today?
       </div>
     </div>
-
     <div class="chat-input-area">
       <input type="text" class="chat-input" id="chat-input" placeholder="Type your message..." onkeypress="handleChatKey(event)">
       <button onclick="sendMessage()" class="btn btn-primary" style="padding: 10px; border-radius: 50%; width: 40px; height: 40px;">
@@ -170,6 +167,5 @@
       scrollToBottom();
     }
   </script>
-  {% endif %}
 </body>
 </html>

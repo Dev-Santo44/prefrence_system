@@ -227,6 +227,85 @@
 
   .text-highlight { color: var(--accent-secondary); }
 
+  /* ── AUTH MODAL ── */
+  .auth-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(5, 5, 16, 0.8);
+    backdrop-filter: blur(12px);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .auth-overlay.active { display: flex; }
+
+  .auth-card {
+    width: 100%;
+    max-width: 480px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 32px;
+    padding: 48px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+    position: relative;
+    animation: modalAuth 0.5s var(--ease-premium);
+  }
+
+  @keyframes modalAuth {
+    from { opacity: 0; transform: scale(0.95) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .auth-tabs {
+    display: flex;
+    gap: 8px;
+    background: rgba(255,255,255,0.05);
+    padding: 6px;
+    border-radius: 14px;
+    margin-bottom: 32px;
+  }
+  .auth-tab {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-gray);
+  }
+  .auth-tab.active {
+    background: var(--accent-primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+  }
+
+  .auth-close {
+    position: absolute;
+    top: 24px; right: 24px;
+    background: none; border: none; color: var(--text-gray);
+    cursor: pointer; padding: 8px;
+  }
+  .auth-close:hover { color: white; }
+
+  /* Input Styling */
+  .form-group { margin-bottom: 20px; }
+  .form-group label { display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-gray); margin-bottom: 8px; letter-spacing: 0.05em; font-weight: 700; }
+  .form-group input {
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: white;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus { border-color: var(--accent-primary); outline: none; background: rgba(255,255,255,0.06); }
+
   @media (max-width: 1024px) {
     .grid-split { grid-template-columns: 1fr; gap: 60px; }
     .steps-grid { grid-template-columns: 1fr; }
@@ -249,8 +328,8 @@
           <a href="{% url 'survey' %}" class="btn-premium btn-filled">Continue Assessment</a>
           <a href="{% url 'dashboard' %}" class="btn-premium btn-outline">View Dashboard</a>
         {% else %}
-          <a href="#auth-box" class="btn-premium btn-filled" onclick="openAuth()">Get Started</a>
-          <a href="#auth-box" class="btn-premium btn-outline" onclick="openAuth('login')">Sign In</a>
+          <a href="javascript:void(0)" onclick="openAuth('register')" class="btn-premium btn-filled">Get Started</a>
+          <a href="javascript:void(0)" onclick="openAuth('login')" class="btn-premium btn-outline">Sign In</a>
         {% endif %}
       </div>
     </div>
@@ -355,16 +434,60 @@
     </div>
   </section>
 
-  <!-- ── HIDDEN AUTH BOX (For Guest Access) ── -->
-  <div id="auth-box" style="display: none; padding-top: 100px;">
-    <!-- Reuse existing auth logic or embed a compact version -->
-    <div class="glass-panel" style="max-width: 500px; margin: 0 auto; padding: 40px;">
-        <h2 style="text-align: center; margin-bottom: 30px;" id="auth-title">Welcome Home</h2>
-        <!-- Simple link to full login page or overlay -->
-        <p style="text-align: center; color: var(--text-gray); line-height: 1.6;">Our authentication system is secure and private. Please continue to the sign-in hub.</p>
-        <div style="display: flex; gap: 16px; margin-top: 32px;">
-            <a href="/?login=true" class="btn-premium btn-filled" style="flex: 1; text-align: center;">Sign In</a>
-            <a href="/?register=true" class="btn-premium btn-outline" style="flex: 1; text-align: center;">Join AI</a>
+  <!-- ── AUTH OVERLAY ── -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-card">
+        <button class="auth-close" onclick="closeAuth()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+
+        <div class="auth-tabs">
+            <div id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Sign In</div>
+            <div id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Join AI</div>
+        </div>
+
+        <!-- Login Form -->
+        <div id="form-login" class="auth-box">
+            <h2 style="margin-bottom: 8px;">Welcome Back</h2>
+            <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 32px;">Pick up where you left off.</p>
+            
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="login">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    {{ login_form.email }}
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    {{ login_form.password }}
+                </div>
+                <button type="submit" class="btn-premium btn-filled" style="width: 100%; margin-top: 10px;">Sign In to System</button>
+            </form>
+        </div>
+
+        <!-- Register Form -->
+        <div id="form-register" class="auth-box" style="display: none;">
+            <h2 style="margin-bottom: 8px;">Join the Future</h2>
+            <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 32px;">Create your AI style profile today.</p>
+            
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="register">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    {{ register_form.name }}
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    {{ register_form.email }}
+                </div>
+                <div class="form-group">
+                    <label>Create Password</label>
+                    {{ register_form.password }}
+                </div>
+                <button type="submit" class="btn-premium btn-filled" style="width: 100%; margin-top: 10px;">Initialize Profile</button>
+            </form>
         </div>
     </div>
   </div>
@@ -372,15 +495,44 @@
 </div>
 
 <script>
-  function openAuth(mode) {
-    const auth = document.getElementById('auth-box');
-    auth.style.display = 'block';
-    auth.scrollIntoView({ behavior: 'smooth' });
-    if(mode === 'login') {
-        document.getElementById('auth-title').textContent = "Welcome Back";
-    } else {
-        document.getElementById('auth-title').textContent = "Join the Future";
-    }
+  function openAuth(mode = 'login') {
+    document.getElementById('auth-overlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    switchAuthTab(mode);
   }
+
+  function closeAuth() {
+    document.getElementById('auth-overlay').classList.remove('active');
+    document.body.style.overflow = 'auto';
+    // Clear URL params
+    window.history.replaceState({}, document.title, "/");
+  }
+
+  function switchAuthTab(mode) {
+    const tabs = document.querySelectorAll('.auth-tab');
+    const forms = document.querySelectorAll('.auth-box');
+    
+    tabs.forEach(t => t.classList.remove('active'));
+    forms.forEach(f => f.style.display = 'none');
+    
+    document.getElementById(`tab-${mode}`).classList.add('active');
+    document.getElementById(`form-${mode}`).style.display = 'block';
+  }
+
+  // Handle URL parameters for navigation triggers
+  window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    if(params.has('login')) openAuth('login');
+    if(params.has('register')) openAuth('register');
+  });
+
+  // Handle Django error messages automatically opening the modal if needed
+  {% if messages %}
+    {% for message in messages %}
+      {% if active_tab == 'login' or active_tab == 'register' %}
+        openAuth('{{ active_tab }}');
+      {% endif %}
+    {% endfor %}
+  {% endif %}
 </script>
 {% endblock %}

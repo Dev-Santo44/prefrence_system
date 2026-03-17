@@ -466,7 +466,6 @@ def contact_view(request):
 
 # ── Chatbot API ───────────────────────────────────────────────────────────────
 
-@login_required
 @require_POST
 def chat_api_view(request):
     """Handle incoming user message and return AI response."""
@@ -479,16 +478,23 @@ def chat_api_view(request):
             return JsonResponse({"error": "Empty message"}, status=400)
             
         # Ensure user has a session or create one
+        user = request.user if request.user.is_authenticated else None
+        
         if not session_id:
-            session = ChatSession.objects.create(user=request.user)
+            session = ChatSession.objects.create(user=user)
             session_id = session.id
         else:
-            session = ChatSession.objects.filter(id=session_id, user=request.user).first()
-            if not session:
-                session = ChatSession.objects.create(user=request.user)
+            session = ChatSession.objects.filter(id=session_id).first()
+            # Security check: if session belongs to a user, it must be the current user
+            if session and session.user and session.user != user:
+                # Unauthorized access to someone else's session
+                session = ChatSession.objects.create(user=user)
+                session_id = session.id
+            elif not session:
+                session = ChatSession.objects.create(user=user)
                 session_id = session.id
             
-        bot_reply, recommendations = get_chatbot_response(request.user, session_id, user_message)
+        bot_reply, recommendations = get_chatbot_response(user, session_id, user_message)
         
         return JsonResponse({
             "session_id": session_id,
@@ -498,16 +504,24 @@ def chat_api_view(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-@login_required
 def chat_history_view(request):
     """Retrieve history for a specific session."""
     session_id = request.GET.get("session_id")
     if not session_id:
         return JsonResponse({"messages": []})
         
+    user = request.user if request.user.is_authenticated else None
+    
+    session = ChatSession.objects.filter(id=session_id).first()
+    if not session:
+        return JsonResponse({"messages": []})
+
+    # Security check: if session belongs to a user, it must be the current user
+    if session.user and session.user != user:
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+        
     messages = ChatMessage.objects.filter(
-        session__id=session_id, 
-        session__user=request.user
+        session=session
     ).order_by("timestamp")
     
     serialized = []

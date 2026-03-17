@@ -175,7 +175,7 @@ class SwipeResponse(models.Model):
 
 
 class ChatSession(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chat_sessions")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chat_sessions", null=True, blank=True)
     started_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
