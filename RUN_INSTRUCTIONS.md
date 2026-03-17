@@ -53,7 +53,10 @@ pip install -r requirements.txt
     DJANGO_DEBUG=True
     ```
     > [!IMPORTANT]
-    > Replace `your_mysql_password` with your actual MySQL root password.
+    > **For XAMPP users**: 
+    > 1. Start **Apache** and **MySQL** modules from the XAMPP Control Panel.
+    > 2. By default, the `DB_PASSWORD` for `root` is empty. Leave it blank in your `.env` file: `DB_PASSWORD=`
+    > 3. Replace `your_mysql_password` with your actual MySQL password if you have set one.
 
 ### 5. Database Setup & Data Population
 
