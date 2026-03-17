@@ -55,30 +55,50 @@ pip install -r requirements.txt
     > [!IMPORTANT]
     > Replace `your_mysql_password` with your actual MySQL root password.
 
-### 5. Run Database Migrations
-Initialize the system tables:
+### 5. Database Setup & Data Population
+
+#### Option A: Full Automated Setup (Single Command)
+Run this single command to handle migrations, create the catalog, and precompute AI features:
 ```bash
-python manage.py makemigrations preference_app
-python manage.py migrate
+python manage.py makemigrations preference_app && python manage.py migrate && python populate_jewelry_questions.py && python generate_catalog.py && python precompute_catalog_features.py
 ```
 
-### 6. Seed Initial Data (SQL)
-To populate the survey questions and basic configuration, run the following SQL script in MySQL Workbench or via command line:
-1.  Target Database: `preference_db`
-2.  Run file: `database/seed_questions.sql`
+#### Option B: Sequential Steps
+If you prefer to run them one-by-one:
 
-Alternatively, via command line:
-```bash
-mysql -u root -p preference_db < database/seed_questions.sql
-```
+1.  **Run Migrations**:
+    ```bash
+    python manage.py makemigrations preference_app
+    python manage.py migrate
+    ```
 
-### 7. Create Admin Account
-Create a staff account to access the admin dashboard:
+2.  **Seed Initial Data (SQL Script)**:
+    ```bash
+    mysql -u root -p preference_db < database/seed_questions.sql
+    ```
+
+3.  **Populate Survey Questions**:
+    ```bash
+    python populate_jewelry_questions.py
+    ```
+
+4.  **Generate Product Catalog**:
+    ```bash
+    python generate_catalog.py
+    ```
+
+5.  **Precompute AI Features**:
+    ```bash
+    python precompute_catalog_features.py
+    ```
+
+### 6. Create Admin Account
+Create a staff account to access the admin dashboard (this is interactive):
 ```bash
 python manage.py createsuperuser
 ```
 
-### 8. Start the Development Server
+### 7. Start the Development Server
 Run the project:
 ```bash
 python manage.py runserver
