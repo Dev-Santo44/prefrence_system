@@ -596,21 +596,21 @@ def trending_view(request):
         {
             "title": "The Evolution of Minimalist Gold",
             "excerpt": "Discover how modern artisans are stripping back the layers to create breathtaking, understated pieces.",
-            "image": "/media/products/ring/ring 13.jpg",
+            "image": f"https://storage.googleapis.com/{os.getenv('GS_BUCKET_NAME')}/products/ring/ring%2013.jpg",
             "date": "March 18, 2026",
             "read_time": "5 min read"
         },
         {
             "title": "Styling Tips for 2026: Layering Masterclass",
             "excerpt": "From delicate chains to statement pendants, learn the art of perfectly curated layering.",
-            "image": "/media/products/necklace/necklace 5.jpg",
+            "image": f"https://storage.googleapis.com/{os.getenv('GS_BUCKET_NAME')}/products/necklace/necklace%205.jpg",
             "date": "March 15, 2026",
             "read_time": "4 min read"
         },
         {
             "title": "The Return of Vintage Glamour",
             "excerpt": "Why heavy, intricate traditional designs are making a massive comeback in bridal fashion.",
-            "image": "/media/products/earrings/earrings 47.jpg",
+            "image": f"https://storage.googleapis.com/{os.getenv('GS_BUCKET_NAME')}/products/earrings/earrings%2047.jpg",
             "date": "March 10, 2026",
             "read_time": "7 min read"
         }
