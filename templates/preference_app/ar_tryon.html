@@ -501,17 +501,28 @@
     function getAsset(url) {
         if (assetCache[url]) return assetCache[url];
         
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.src = url;
-        
-        const assetObj = { img: img, processed: null, loading: true };
+        const assetObj = { img: new Image(), processed: null, loading: true, error: false };
         assetCache[url] = assetObj;
 
-        img.onload = () => {
-            console.log("Image loaded, processing transparency:", url);
-            assetObj.processed = processTransparency(img);
+        const proxyUrl = `/api/gcs-proxy/?url=${encodeURIComponent(url)}`;
+        
+        assetObj.img.crossOrigin = "anonymous";
+        assetObj.img.src = proxyUrl;
+
+        assetObj.img.onload = () => {
+            console.log("✅ Image loaded via Proxy:", proxyUrl);
+            assetObj.processed = processTransparency(assetObj.img);
             assetObj.loading = false;
+        };
+
+        assetObj.img.onerror = () => {
+            console.warn("⚠️ Proxy load failed, trying direct URL as fallback:", url);
+            assetObj.img.crossOrigin = null;
+            assetObj.img.src = url;
+            assetObj.img.onload = () => {
+                assetObj.processed = null; 
+                assetObj.loading = false;
+            };
         };
         
         return assetObj;
@@ -528,21 +539,38 @@
             const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
             const data = imageData.data;
 
+            // 1. Detect if it's a white-background asset (check top-left corner)
+            const tr = data[0], tg = data[1], tb = data[2];
+            const isWhiteBg = (tr > 180 && tg > 180 && tb > 180);
+
+            if (!isWhiteBg) {
+                console.log("Preserving non-white background asset.");
+                return null; // Return null so the original img is used as-is
+            }
+
+            console.log("Removing background and boosting brightness for white-background asset.");
+
             for (let i = 0; i < data.length; i += 4) {
                 const r = data[i];
                 const g = data[i + 1];
                 const b = data[i + 2];
-                // Near-white range
-                if (r > 230 && g > 230 && b > 230) {
+                
+                // Near-white range (Aggressive to remove JPEG compression artifacts)
+                if (r > 180 && g > 180 && b > 180) {
                     data[i + 3] = 0;
+                } else if (data[i + 3] > 0) {
+                    // Boost brightness for the product itself (scale by 1.25)
+                    data[i]     = Math.min(255, r * 1.25);
+                    data[i + 1] = Math.min(255, g * 1.25);
+                    data[i + 2] = Math.min(255, b * 1.25);
                 }
             }
 
             tempCtx.putImageData(imageData, 0, 0);
             return tempCanvas;
         } catch (e) {
-            console.warn("CORS/Canvas security block. Using raw image without background removal.", e);
-            return null; // Fallback to raw img
+            console.warn("CORS/Canvas security block. Using raw image.", e);
+            return null;
         }
     }
 

@@ -644,3 +644,22 @@ def trending_view(request):
         "blogs": blogs,
     }
     return render(request, 'preference_app/trending.html', context)
+
+
+def gcs_proxy(request):
+    """Proxy GCS images to avoid CORS issues on the frontend Canvas."""
+    url = request.GET.get('url')
+    if not url or 'storage.googleapis.com' not in url:
+        from django.http import JsonResponse
+        return JsonResponse({"error": "Invalid URL"}, status=400)
+    
+    import requests
+    from django.http import HttpResponse, JsonResponse
+    try:
+        response = requests.get(url, stream=True, timeout=10)
+        django_response = HttpResponse(response.content, content_type=response.headers.get('Content-Type'))
+        django_response['Access-Control-Allow-Origin'] = '*'
+        return django_response
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+

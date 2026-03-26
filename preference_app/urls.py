@@ -47,4 +47,5 @@ urlpatterns = [
     path('contact/',       views.contact_view,         name='contact'),
     path('explore/',       views.explore_view,         name='explore'),
     path('trending/',      views.trending_view,        name='trending'),
+    path('api/gcs-proxy/', views.gcs_proxy,            name='gcs_proxy'),
 ]

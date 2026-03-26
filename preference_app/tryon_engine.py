@@ -228,6 +228,13 @@ def _remove_background(pil_img):
     # Set alpha to 0 for white pixels
     data[:,:,3][white_mask] = 0
 
+    # Boost brightness for non-transparent pixels if it was a white-bg asset
+    if np.any(white_mask):
+        # Only boost if it was likely a white-bg asset
+        product_mask = ~white_mask & (data[:,:,3] > 0)
+        # Scale RGB by 1.2
+        data[:,:,:3][product_mask] = np.clip(data[:,:,:3][product_mask].astype(float) * 1.2, 0, 255).astype(np.uint8)
+
     return Image.fromarray(data)
 
 # ── PNG overlay helper ────────────────────────────────────────────────────────
