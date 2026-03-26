@@ -260,6 +260,75 @@
     line-height: 1.6;
     margin: 0;
   }
+    /* ── Live News Section ── */
+    .news-section {
+        margin-bottom: 80px;
+    }
+
+    .news-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .news-card {
+        background: var(--card-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 15px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: var(--text-white);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .news-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--accent-primary);
+        transform: translateX(5px);
+    }
+
+    .news-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+        line-height: 1.4;
+    }
+
+    .news-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+        font-size: 0.8rem;
+        color: var(--text-gray);
+    }
+
+    .news-tag {
+        color: var(--accent-primary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .attribution-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        color: var(--text-gray);
+        margin-top: 15px;
+    }
+
+    .attribution-badge img {
+        height: 14px;
+        filter: grayscale(1) brightness(2);
+    }
 </style>
 {% endblock %}
 
@@ -271,53 +340,52 @@
     <p>Live market insights, investment-grade gold features, and editorial inspiration to guide your collection.</p>
   </div>
 
-  <!-- Live Market Rates -->
   <div class="rates-grid">
-    <!-- 24K Gold -->
+    {% for key, rate in market_rates.items %}
     <div class="rate-card">
       <div class="rate-info">
-        <h3>24K Gold (10g)</h3>
-        <p class="rate-price">₹{{ market_rates.gold_24k.price }}</p>
+        <h3>{{ rate.name }}</h3>
+        <p class="rate-price">₹{{ rate.price }}</p>
       </div>
       <div class="rate-meta">
-        <span class="trend-badge {% if market_rates.gold_24k.direction == 'up' %}trend-up{% else %}trend-down{% endif %}">
-          {% if market_rates.gold_24k.direction == 'up' %}📈{% else %}📉{% endif %} 
-          {{ market_rates.gold_24k.trend }}
+        <span class="trend-badge {% if rate.direction == 'up' %}trend-up{% else %}trend-down{% endif %}">
+          {% if rate.direction == 'up' %}📈{% else %}📉{% endif %} 
+          {{ rate.trend }}
         </span>
-        <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: 10px;">Live MCX Rate</p>
+        <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: 10px;">{{ rate.unit }}</p>
       </div>
     </div>
-    
-    <!-- 22K Gold -->
-    <div class="rate-card">
-      <div class="rate-info">
-        <h3>22K Gold (10g)</h3>
-        <p class="rate-price">₹{{ market_rates.gold_22k.price }}</p>
-      </div>
-      <div class="rate-meta">
-        <span class="trend-badge {% if market_rates.gold_22k.direction == 'up' %}trend-up{% else %}trend-down{% endif %}">
-          {% if market_rates.gold_22k.direction == 'up' %}📈{% else %}📉{% endif %} 
-          {{ market_rates.gold_22k.trend }}
-        </span>
-        <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: 10px;">Standard Retail</p>
-      </div>
-    </div>
-
-    <!-- Silver -->
-    <div class="rate-card">
-      <div class="rate-info">
-        <h3>Silver (1kg)</h3>
-        <p class="rate-price">₹{{ market_rates.silver.price }}</p>
-      </div>
-      <div class="rate-meta">
-        <span class="trend-badge {% if market_rates.silver.direction == 'up' %}trend-up{% else %}trend-down{% endif %}">
-          {% if market_rates.silver.direction == 'up' %}📈{% else %}📉{% endif %} 
-          {{ market_rates.silver.trend }}
-        </span>
-        <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: 10px;">Live MCX Rate</p>
-      </div>
-    </div>
+    {% endfor %}
   </div>
+
+  <div style="text-align: right; margin-top: -60px; margin-bottom: 40px;">
+      <div class="attribution-badge">
+          <span>Data via</span>
+          <img src="https://www.moneycontrol.com/favicon.ico" alt="MoneyControl">
+          <strong>MoneyControl</strong>
+      </div>
+  </div>
+
+  <!-- Live Market News -->
+  {% if live_news %}
+  <div class="news-section">
+      <div class="section-header">
+          <h2>Market <span class="gradient-text">Pulse</span> News</h2>
+          <span style="color: var(--text-gray); font-size: 0.9rem;">Real-time Industry Updates</span>
+      </div>
+      <div class="news-grid">
+          {% for news in live_news|slice:":6" %}
+          <a href="{{ news.link }}" target="_blank" class="news-card">
+              <div class="news-title">{{ news.title }}</div>
+              <div class="news-footer">
+                  <span class="news-tag">Market News</span>
+                  <span>{{ news.date }}</span>
+              </div>
+          </a>
+          {% endfor %}
+      </div>
+  </div>
+  {% endif %}
 
   <!-- Trending Gold Jewelry -->
   <div class="section-header">

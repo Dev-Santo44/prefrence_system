@@ -16,9 +16,11 @@ build/
 venv/
 env/
 ENV/
-.env/
 .venv/
+
+# Environment variables
 .env
+
 # Unit test / coverage reports
 htmlcov/
 .tox/
@@ -32,4 +34,14 @@ coverage.xml
 # Jupyter Notebook
 .ipynb_checkpoints
 
-media
+# Media files
+media/
+
+# Static collected files
+staticfiles/
+
+# Cache files
+metal_prices_cache.json
+
+# Vercel
+.vercel/

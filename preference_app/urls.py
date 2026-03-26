@@ -24,6 +24,8 @@ urlpatterns = [
 
     # ── Try-On ───────────────────────────────────────
     path('tryon/',         views.tryon_api_view,       name='tryon'),
+    path('ar-tryon/',      views.ar_tryon_view,        name='ar_tryon'),
+
 
     # ── Wishlist ─────────────────────────────────────
     path('wishlist/toggle/', views.wishlist_toggle,    name='wishlist_toggle'),

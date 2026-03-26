@@ -120,14 +120,18 @@ def index_view(request):
         elif action == "register":
             register_form = RegisterForm(request.POST)
             if register_form.is_valid():
-                user = User.objects.create_user(
-                    email    = register_form.cleaned_data["email"].lower(),
-                    name     = register_form.cleaned_data["name"],
-                    password = register_form.cleaned_data["password"],
-                )
-                login(request, user)
-                messages.success(request, f"Welcome, {user.name}! Your account has been created.")
-                return redirect("survey")
+                email = register_form.cleaned_data["email"].lower()
+                try:
+                    user = User.objects.create_user(
+                        email    = email,
+                        name     = register_form.cleaned_data["name"],
+                        password = register_form.cleaned_data["password"],
+                    )
+                    login(request, user)
+                    messages.success(request, f"Welcome, {user.name}! Your account has been created.")
+                    return redirect("survey")
+                except Exception as e:
+                    messages.error(request, f"Database error: {str(e)}")
             active_tab = "register"
 
     return render(request, "preference_app/index.html", {
@@ -463,6 +467,14 @@ def tryon_api_view(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+@login_required
+def ar_tryon_view(request):
+    """Render the real-time AR try-on page."""
+    items = JewelryCatalog.objects.exclude(image_url="").order_by('?')[:20]
+    return render(request, "preference_app/ar_tryon.html", {"tryon_items": items})
+
+
+
 # ── Analysis ──
 
 def compute_visual_preference_scores(user):
@@ -553,23 +565,33 @@ def explore_view(request):
 # ── Trending Page ──
 
 def trending_view(request):
-    """Trending page showing live market rates, premium gold items, and editorial blogs."""
-    # Simulated Live Market Rates (INR per 10g / 1kg)
-    market_rates = {
-        "gold_24k": {"price": "71,500", "trend": "+1.2%", "direction": "up"},
-        "gold_22k": {"price": "65,540", "trend": "+1.1%", "direction": "up"},
-        "silver":   {"price": "84,000", "trend": "-0.5%", "direction": "down"}
-    }
+    """Trending page showing live market rates, premium gold items, live news, and editorial blogs."""
+    from preference_app.moneycontrol_service import get_live_metal_prices, get_jewelry_metal_news
 
-    # Fetch top premium items (we'll filter for gold or highest priced items)
-    # Using our custom get_unique_products to avoid duplicate images
+    # ── Live Market Rates from MoneyControl ──
+    live_prices = get_live_metal_prices()
+    # Map to template-compatible format (backwards-compatible keys)
+    market_rates = {}
+    for key, data in live_prices.items():
+        market_rates[key] = {
+            "price": data.get("price", "0"),
+            "trend": data.get("change", "+0.0%"),
+            "direction": data.get("direction", "up"),
+            "unit": data.get("unit", ""),
+            "name": data.get("name", key),
+        }
+
+    # ── Live Jewelry/Metal News from MoneyControl ──
+    live_news = get_jewelry_metal_news()
+
+    # ── Fetch top premium items ──
     premium_gold_items = JewelryCatalog.objects.filter(
         Q(material__icontains='gold') | Q(price__gte=15000)
     ).order_by('-price')
     
     trending_gold_items = get_unique_products(premium_gold_items, limit=12)
 
-    # Hardcoded sample blog metadata for the template
+    # ── Editorial Blogs (static fallback content) ──
     blogs = [
         {
             "title": "The Evolution of Minimalist Gold",
@@ -597,6 +619,7 @@ def trending_view(request):
     context = {
         "market_rates": market_rates,
         "trending_items": trending_gold_items,
-        "blogs": blogs
+        "live_news": live_news,
+        "blogs": blogs,
     }
     return render(request, 'preference_app/trending.html', context)

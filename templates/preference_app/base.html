@@ -14,34 +14,103 @@
 
 <!-- Global Navigation -->
 <nav class="nav-container">
-  <div class="nav-content" style="justify-content: space-between; max-width: 1300px; margin: 0 auto;">
-    <a class="logo" href="{% url 'index' %}" style="font-weight: 800; font-size: 1.25rem;">
+  <div class="nav-content" style="max-width: 1300px; margin: 0 auto; padding: 0 24px;">
+    <a class="logo" href="{% url 'index' %}" style="font-weight: 800; font-size: 1.25rem; flex-shrink: 0;">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
       <span>PreferenceAI</span>
     </a>
     
-    <div style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; gap: 32px;" class="mobile-hide">
-      <a href="{% url 'index' %}" class="nav-link {% if request.path == '/' %}active{% endif %}" style="font-size: 0.85rem; font-weight: 600;">Home</a>
-      <a href="{% url 'explore' %}" class="nav-link {% if '/explore/' in request.path %}active{% endif %}" style="font-size: 0.85rem; font-weight: 600;">Explore</a>
-      <a href="{% url 'trending' %}" class="nav-link {% if request.path == '/trending/' %}active{% endif %}" style="font-size: 0.85rem; font-weight: 600; color: #fbbf24;">Trending</a>
-      <a href="{% url 'about' %}" class="nav-link {% if request.path == '/about/' %}active{% endif %}" style="font-size: 0.85rem; font-weight: 600;">About</a>
-      <a href="{% url 'contact' %}" class="nav-link {% if request.path == '/contact/' %}active{% endif %}" style="font-size: 0.85rem; font-weight: 600;">Contact</a>
+    <!-- Hamburger Menu Toggle (Mobile) -->
+    <button class="mobile-menu-toggle" id="menuToggle" aria-label="Toggle Menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+
+    <!-- Desktop Navigation -->
+    <div class="nav-links-desktop">
+      <a href="{% url 'index' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">Home</a>
+      <a href="{% url 'explore' %}" class="nav-link {% if '/explore/' in request.path %}active{% endif %}">Explore</a>
+      <a href="{% url 'trending' %}" class="nav-link {% if request.path == '/trending/' %}active{% endif %}" style="color: #fbbf24;">Trending</a>
+      <a href="{% url 'about' %}" class="nav-link {% if request.path == '/about/' %}active{% endif %}">About</a>
+      <a href="{% url 'contact' %}" class="nav-link {% if request.path == '/contact/' %}active{% endif %}">Contact</a>
       {% if user.is_authenticated %}
-        <a href="{% url 'dashboard' %}" class="nav-link {% if '/dashboard/' in request.path %}active{% endif %}" style="font-size: 0.85rem; font-weight: 600;">Dashboard</a>
+        <a href="{% url 'dashboard' %}" class="nav-link {% if '/dashboard/' in request.path %}active{% endif %}">Dashboard</a>
       {% endif %}
     </div>
 
-    <div style="display: flex; align-items: center; gap: 12px;">
+    <!-- Auth Buttons -->
+    <div class="nav-auth">
       {% if user.is_authenticated %}
-        <a href="{% url 'survey' %}" class="btn btn-filled" style="padding: 10px 24px; font-size: 0.82rem; border-radius: 10px; font-weight: 700;">Survey</a>
-        <a href="{% url 'logout' %}" class="btn btn-outline" style="padding: 10px 24px; font-size: 0.82rem; border-radius: 10px;">Logout</a>
+        <a href="{% url 'survey' %}" class="btn btn-filled survey-btn">Survey</a>
+        <a href="{% url 'logout' %}" class="btn btn-outline auth-btn">Logout</a>
       {% else %}
-        <a href="/?login=true" class="nav-link" style="font-size: 0.85rem; font-weight: 600;">Sign In</a>
-        <a href="/?register=true" class="btn btn-filled" style="padding: 10px 24px; font-size: 0.82rem; border-radius: 10px; font-weight: 700;">Join Free</a>
+        <a href="/?login=true" class="nav-link sign-in-link">Sign In</a>
+        <a href="/?register=true" class="btn btn-filled auth-btn join-btn">Join Free</a>
       {% endif %}
     </div>
   </div>
+
+  <!-- Mobile Navigation Overlay -->
+  <div class="mobile-nav-overlay" id="mobileNav">
+    <div class="mobile-nav-content">
+      <div class="mobile-nav-header">
+        <a class="logo" href="{% url 'index' %}">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <span>PreferenceAI</span>
+        </a>
+        <button class="mobile-menu-close" id="menuClose">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="mobile-nav-links">
+        <a href="{% url 'index' %}" class="mobile-nav-link {% if request.path == '/' %}active{% endif %}">Home</a>
+        <a href="{% url 'explore' %}" class="mobile-nav-link {% if '/explore/' in request.path %}active{% endif %}">Explore</a>
+        <a href="{% url 'trending' %}" class="mobile-nav-link {% if request.path == '/trending/' %}active{% endif %}" style="color: #fbbf24;">Trending</a>
+        <a href="{% url 'about' %}" class="mobile-nav-link {% if request.path == '/about/' %}active{% endif %}">About</a>
+        <a href="{% url 'contact' %}" class="mobile-nav-link {% if request.path == '/contact/' %}active{% endif %}">Contact</a>
+        {% if user.is_authenticated %}
+          <a href="{% url 'dashboard' %}" class="mobile-nav-link {% if '/dashboard/' in request.path %}active{% endif %}">Dashboard</a>
+        {% endif %}
+      </div>
+      <div class="mobile-nav-auth">
+        {% if user.is_authenticated %}
+          <a href="{% url 'survey' %}" class="btn btn-filled" style="width: 100%;">Survey</a>
+          <a href="{% url 'logout' %}" class="btn btn-outline" style="width: 100%;">Logout</a>
+        {% else %}
+          <a href="/?login=true" class="btn btn-outline" style="width: 100%;">Sign In</a>
+          <a href="/?register=true" class="btn btn-filled" style="width: 100%;">Join Free</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 </nav>
+
+<script>
+  const menuToggle = document.getElementById('menuToggle');
+  const menuClose = document.getElementById('menuClose');
+  const mobileNav = document.getElementById('mobileNav');
+
+  if (menuToggle && mobileNav) {
+    menuToggle.onclick = () => {
+      mobileNav.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    };
+  }
+
+  if (menuClose && mobileNav) {
+    menuClose.onclick = () => {
+      mobileNav.classList.remove('active');
+      document.body.style.overflow = '';
+    };
+  }
+
+  // Close menu on link click
+  document.querySelectorAll('.mobile-nav-link').forEach(link => {
+    link.onclick = () => {
+      mobileNav.classList.remove('active');
+      document.body.style.overflow = '';
+    };
+  });
+</script>
 
 <div class="page-wrapper">
   {% block content %}{% endblock %}

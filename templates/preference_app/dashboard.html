@@ -140,8 +140,18 @@
       {# ── MODULE: Virtual Try-On ── #}
       <div id="module-tryon" class="module-content">
         <div class="glass-panel" style="padding:32px; margin-bottom:24px;">
-          <h3 style="margin-bottom:8px;">Virtual Try-On ✨</h3>
-          <p style="color:var(--text-gray); margin-bottom:24px;">Upload your photo and try on any item below.</p>
+          <div style="margin-bottom:24px; display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <h3 style="margin-bottom:8px;">Virtual Try-On ✨</h3>
+              <p style="color:var(--text-gray);">Upload your photo and try on any item below.</p>
+            </div>
+            <a href="{% url 'ar_tryon' %}" 
+               style="background:linear-gradient(135deg, var(--accent-primary), #a78bfa); color:white; padding:12px 24px; border-radius:12px; text-decoration:none; font-weight:700; display:flex; align-items:center; gap:10px; box-shadow:0 10px 20px rgba(99,102,241,0.2); transition:all .3s ease;"
+               onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 15px 30px rgba(99,102,241,0.3)';"
+               onmouseout="this.style.transform='none'; this.style.boxShadow='0 10px 20px rgba(99,102,241,0.2)';">
+              <span>🚀 Try Real-Time AR</span>
+            </a>
+          </div>
           <div style="margin-bottom:20px; display:flex; align-items:center; gap:16px;">
             <input type="file" id="tryon-photo" accept="image/*" style="display:none">
             <button onclick="document.getElementById('tryon-photo').click()"

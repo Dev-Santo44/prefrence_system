@@ -6,13 +6,13 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "fallback-dev-secret-key-change-in-production")
 DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 
 # ── Installed Apps ────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
@@ -27,6 +27,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -40,7 +41,6 @@ ROOT_URLCONF = "preference_site.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        # Look for templates inside each app's templates/ folder
         "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -59,18 +59,16 @@ WSGI_APPLICATION = "preference_site.wsgi.application"
 # ── Database ──────────────────────────────────────────────────────────────────
 DATABASES = {
     "default": {
-        "ENGINE":   "django.db.backends.mysql",
-        "NAME":     os.getenv("DB_NAME",     "preference_db"),
-        "USER":     os.getenv("DB_USER",     "root"),
+        "ENGINE":   os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
+        "NAME":     os.getenv("DB_NAME", "postgres"),
+        "USER":     os.getenv("DB_USER", "postgres"),
         "PASSWORD": os.getenv("DB_PASSWORD", ""),
-        "HOST":     os.getenv("DB_HOST",     "localhost"),
-        "PORT":     os.getenv("DB_PORT",     "3306"),
-        "OPTIONS":  {"charset": "utf8mb4"},
+        "HOST":     os.getenv("DB_HOST", "localhost"),
+        "PORT":     os.getenv("DB_PORT", "5432"),
     }
 }
 
 # ── Authentication ────────────────────────────────────────────────────────────
-# Use Django's built-in session auth. We extend it with a custom User model.
 AUTH_USER_MODEL = "preference_app.User"
 
 LOGIN_URL          = "/"
@@ -92,10 +90,15 @@ USE_TZ        = True
 STATIC_URL  = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# ── Message storage (for flash messages) ─────────────────────────────────────
+# ── Message storage ──────────────────────────────────────────────────────────
 from django.contrib.messages import constants as messages
 MESSAGE_TAGS = {
     messages.DEBUG:   "debug",
