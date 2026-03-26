@@ -451,18 +451,39 @@ def chat_history_view(request):
 @login_required
 @require_POST
 def tryon_api_view(request):
+    import tempfile
     try:
         user_photo = request.FILES.get("photo")
         item_id    = request.POST.get("item_id")
         item_type  = request.POST.get("item_type")
         if not user_photo: return JsonResponse({"error": "No photo"}, status=400)
         
-        path = default_storage.save(f"tmp/tryon_{request.user.id}.jpg", ContentFile(user_photo.read()))
-        full_path = os.path.join(settings.MEDIA_ROOT, path)
-        result_path = process_tryon(full_path, item_id, item_type)
-        if result_path:
-            return JsonResponse({"result_url": f"{settings.MEDIA_URL}tryon/{os.path.basename(result_path)}"})
-        return JsonResponse({"error": "Failed"}, status=400)
+        # 1. Save to local temporary file (OpenCV needs a real path)
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+            for chunk in user_photo.chunks():
+                tmp.write(chunk)
+            local_user_path = tmp.name
+
+        # 2. Run try-on engine (saves result to local MEDIA_ROOT/tryon/)
+        result_local_path = process_tryon(local_user_path, item_id, item_type)
+        
+        # Cleanup input temp file
+        if os.path.exists(local_user_path):
+            os.remove(local_user_path)
+
+        if result_local_path and os.path.exists(result_local_path):
+            # 3. Upload result to GCS
+            filename = os.path.basename(result_local_path)
+            with open(result_local_path, "rb") as f:
+                gcs_path = default_storage.save(f"tryon/{filename}", ContentFile(f.read()))
+            
+            # Cleanup local result file
+            os.remove(result_local_path)
+            
+            # 4. Return GCS URL
+            return JsonResponse({"result_url": default_storage.url(gcs_path)})
+            
+        return JsonResponse({"error": "Processing failed"}, status=400)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 

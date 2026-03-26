@@ -373,16 +373,20 @@ def process_tryon(user_image_path, jewelry_id, jewelry_type):
         return None
 
     # Step 5 — Save output
-    output_dir = os.path.join(settings.MEDIA_ROOT, 'tryon')
+    output_dir = os.path.join(settings.BASE_DIR, 'media', 'tryon')
     os.makedirs(output_dir, exist_ok=True)
 
-    safe_basename    = os.path.basename(user_image_path).replace(' ', '_')
-    output_filename  = f"tryon_{jewelry_id}_{safe_basename}"
-    if not output_filename.endswith('.jpg'):
-        output_filename = output_filename.rsplit('.', 1)[0] + '.jpg'
+    # Sanitize user image path for output filename
+    user_filename = os.path.basename(user_image_path).replace(' ', '_')
+    output_filename = f"res_{jewelry_id}_{user_filename}"
+    if not output_filename.lower().endswith(('.jpg', '.jpeg')):
+        output_filename += '.jpg'
 
     output_path = os.path.join(output_dir, output_filename)
-    base.convert("RGB").save(output_path, "JPEG", quality=92)
-
-    print(f"[TryOn] Result saved → {output_path}")
-    return output_path
+    try:
+        base.convert("RGB").save(output_path, "JPEG", quality=92)
+        print(f"[TryOn] ✅ Result successfully saved → {output_path}")
+        return output_path
+    except Exception as e:
+        print(f"[TryOn] ❌ Failed to save result to {output_path}: {e}")
+        return None
