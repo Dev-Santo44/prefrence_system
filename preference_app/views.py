@@ -73,7 +73,7 @@ def index_view(request):
                 "Minimalist Luxe":  {"style": "Minimalist", "material": "Gold"},
                 "Bold Statement":   {"style": "Statement", "aesthetic": "Modern"},
                 "Classic Elegance": {"aesthetic": "Traditional", "material": "Diamond"},
-                "Bohemian Spirit":  {"aesthetic": "Vintage", "item_type": "Earrings"},
+                "Bohemian Spirit":  {"aesthetic": "Vintage", "item_type": "Earring"},
                 "Modern Artisan":   {"style": "Modern", "material": "Silver"}
             }
             

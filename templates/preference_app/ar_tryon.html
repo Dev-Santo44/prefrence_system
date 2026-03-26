@@ -523,22 +523,27 @@
         tempCanvas.width = img.width;
         tempCanvas.height = img.height;
         
-        tempCtx.drawImage(img, 0, 0);
-        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-        const data = imageData.data;
+        try {
+            tempCtx.drawImage(img, 0, 0);
+            const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            const data = imageData.data;
 
-        for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-            // Near-white range
-            if (r > 230 && g > 230 && b > 230) {
-                data[i + 3] = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                // Near-white range
+                if (r > 230 && g > 230 && b > 230) {
+                    data[i + 3] = 0;
+                }
             }
-        }
 
-        tempCtx.putImageData(imageData, 0, 0);
-        return tempCanvas;
+            tempCtx.putImageData(imageData, 0, 0);
+            return tempCanvas;
+        } catch (e) {
+            console.warn("CORS/Canvas security block. Using raw image without background removal.", e);
+            return null; // Fallback to raw img
+        }
     }
 
     function processFaceJewelry(landmarks) {
@@ -548,9 +553,11 @@
 
         const imgToDraw = asset.processed || asset.img;
 
-        if (selectedItem.type === 'Earrings') {
+        const type = selectedItem.type.toLowerCase();
+
+        if (type.includes('earring')) {
             drawEarrings(landmarks, imgToDraw);
-        } else if (selectedItem.type === 'Necklace') {
+        } else if (type.includes('necklace') || type.includes('pendant')) {
             drawNecklace(landmarks, imgToDraw);
         }
     }
@@ -562,7 +569,9 @@
 
         const imgToDraw = asset.processed || asset.img;
 
-        if (selectedItem.type === 'Ring' || selectedItem.type === 'Bangle') {
+        const type = selectedItem.type.toLowerCase();
+
+        if (type.includes('ring') || type.includes('bangle') || type.includes('bracelet')) {
             drawRingOrBangle(landmarks, imgToDraw);
         }
     }

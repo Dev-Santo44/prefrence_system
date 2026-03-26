@@ -294,7 +294,9 @@ def process_tryon(user_image_path, jewelry_id, jewelry_type):
     ear_dist  = landmarks.get('ear_distance', img_w // 4)
 
     # Step 4 — Overlay by type
-    if jewelry_type == "Earrings":
+    jewelry_type_lower = jewelry_type.lower()
+    
+    if "earring" in jewelry_type_lower:
         if 'left_ear' not in landmarks or 'right_ear' not in landmarks:
             print("[TryOn] Ear landmarks not found")
             return None
@@ -326,7 +328,7 @@ def process_tryon(user_image_path, jewelry_id, jewelry_type):
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
 
-    elif jewelry_type == "Necklace":
+    elif "necklace" in jewelry_type_lower or "pendant" in jewelry_type_lower:
         if 'neck' not in landmarks:
             print("[TryOn] Neck landmark not found")
             return None
@@ -342,7 +344,7 @@ def process_tryon(user_image_path, jewelry_id, jewelry_type):
             height    = necklace_h,
         )
 
-    elif jewelry_type in ("Ring", "Bangle"):
+    elif any(kw in jewelry_type_lower for kw in ("ring", "bangle", "bracelet")):
         if 'wrist' not in landmarks:
             print("[TryOn] Wrist landmark not found — hand may not be visible")
             return None
