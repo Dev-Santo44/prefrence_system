@@ -86,15 +86,63 @@ TIME_ZONE     = "Asia/Kolkata"
 USE_I18N      = True
 USE_TZ        = True
 
-# ── Static files ──────────────────────────────────────────────────────────────
+# ── Static & Media Files ─────────────────────────────────────────────────────
 STATIC_URL  = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STORAGES = {
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+
+# Media (Default to Local, but Google Cloud Storage if configured)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# Google Cloud Storage Configuration
+GS_BUCKET_NAME = os.getenv("GS_BUCKET_NAME")
+GS_PROJECT_ID = os.getenv("GS_PROJECT_ID")
+GS_CREDENTIALS_JSON = os.getenv("GS_CREDENTIALS_JSON")
+
+if all([GS_BUCKET_NAME, GS_PROJECT_ID, GS_CREDENTIALS_JSON]):
+    try:
+        import json
+        from google.oauth2 import service_account
+
+        cred_dict = json.loads(GS_CREDENTIALS_JSON.strip("'"))
+        GS_CREDENTIALS = service_account.Credentials.from_service_account_info(cred_dict)
+
+        GS_DEFAULT_ACL = None # Required for Uniform Bucket-Level Access
+        GS_QUERYSTRING_AUTH = False
+        
+        STORAGES = {
+            "default": {
+                "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+                "OPTIONS": {
+                    "bucket_name": GS_BUCKET_NAME,
+                    "project_id": GS_PROJECT_ID,
+                    "credentials": GS_CREDENTIALS,
+                    "default_acl": None,
+                    "querystring_auth": False,
+                },
+            },
+            "staticfiles": {
+                "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+            },
+        }
+        MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/"
+        print(f"✅ GCS storage active — bucket: {GS_BUCKET_NAME}")
+    except Exception as e:
+        print(f"⚠️  GCS credentials failed to load ({e}), falling back to local storage.")
+        STORAGES = {
+            "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+            "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+        }
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -108,6 +156,6 @@ MESSAGE_TAGS = {
     messages.ERROR:   "error",
 }
 
-# ── Media Files ───────────────────────────────────────────────────────────────
-MEDIA_URL = "/media/"
+# MEDIA_ROOT is only used when falling back to local FileSystemStorage.
+# GCS active: MEDIA_URL is already set to the GCS public URL above.
 MEDIA_ROOT = BASE_DIR / "media"
