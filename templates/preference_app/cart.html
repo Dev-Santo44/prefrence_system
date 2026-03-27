@@ -1,0 +1,203 @@
+{% extends "preference_app/base.html" %}
+{% load static %}
+
+{% block title %}Shopping Cart — PreferenceAI{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cart-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+
+  .cart-header {
+    margin-bottom: 40px;
+    text-align: center;
+  }
+
+  .cart-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+  }
+
+  .cart-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 40px;
+  }
+
+  .cart-items {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-stroke);
+    border-radius: var(--radius-md);
+    padding: 30px;
+  }
+
+  .cart-item {
+    display: grid;
+    grid-template-columns: 100px 1fr auto;
+    gap: 20px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--glass-stroke);
+    align-items: center;
+  }
+
+  .cart-item:last-child {
+    border-bottom: none;
+  }
+
+  .cart-item-img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 12px;
+    background: #000;
+  }
+
+  .cart-item-info h3 {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+  }
+
+  .cart-item-info p {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+
+  .cart-item-actions {
+    text-align: right;
+  }
+
+  .cart-item-price {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--accent-secondary);
+    margin-bottom: 10px;
+  }
+
+  .btn-remove {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .btn-remove:hover {
+    background: #ef4444;
+    color: white;
+  }
+
+  /* ── Order Summary ── */
+  .order-summary {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-stroke);
+    border-radius: var(--radius-md);
+    padding: 30px;
+    height: fit-content;
+    position: sticky;
+    top: 120px;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 0.95rem;
+  }
+
+  .summary-total {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--glass-stroke);
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+
+  .empty-cart {
+    text-align: center;
+    padding: 80px 40px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--glass-stroke);
+  }
+
+  @media (max-width: 900px) {
+    .cart-grid {
+      grid-template-columns: 1fr;
+    }
+    .order-summary {
+      position: static;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cart-container">
+  <div class="cart-header">
+    <h1>Shopping <span class="gradient-text">Cart</span></h1>
+    <p>Review your selected masterpieces before checkout.</p>
+  </div>
+
+  {% if cart_items %}
+  <div class="cart-grid">
+    <div class="cart-items">
+      {% for item in cart_items %}
+      <div class="cart-item">
+        <img src="{{ item.item.image_url }}" alt="{{ item.item.name }}" class="cart-item-img">
+        <div class="cart-item-info">
+          <h3>{{ item.item.name }}</h3>
+          <p>{{ item.item.item_type }} • {{ item.item.material }}</p>
+          <div style="margin-top: 8px; font-size: 0.85rem;">Quantity: {{ item.quantity }}</div>
+        </div>
+        <div class="cart-item-actions">
+          <div class="cart-item-price">₹{{ item.total_price }}</div>
+          <a href="{% url 'remove_from_cart' item.id %}" class="btn-remove">Remove</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <aside class="order-summary">
+      <h2 style="font-size: 1.4rem; margin-bottom: 25px;">Order Summary</h2>
+      
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span>₹{{ total }}</span>
+      </div>
+      <div class="summary-row">
+        <span>Shipping</span>
+        <span style="color: var(--success);">FREE</span>
+      </div>
+      <div class="summary-row">
+        <span>Estimated Tax</span>
+        <span>₹0</span>
+      </div>
+
+      <div class="summary-row summary-total">
+        <span>Total</span>
+        <span class="gradient-text">₹{{ total }}</span>
+      </div>
+
+      <a href="{% url 'checkout' %}" class="btn btn-filled" style="width: 100%; margin-top: 30px; padding: 16px;">Proceed to Checkout</a>
+      <a href="{% url 'explore' %}" class="btn btn-outline" style="width: 100%; margin-top: 12px; padding: 16px;">Continue Shopping</a>
+    </aside>
+  </div>
+  {% else %}
+  <div class="empty-cart">
+    <div style="font-size: 4rem; margin-bottom: 20px;">🛍️</div>
+    <h2>Your cart is empty.</h2>
+    <p style="margin-bottom: 30px;">Discover our curated collection and find something that sparkles.</p>
+    <a href="{% url 'explore' %}" class="btn btn-filled" style="padding: 16px 40px;">Explore Collection</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

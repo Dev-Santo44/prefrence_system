@@ -1,6 +1,8 @@
 from django.urls import path
 from preference_app import views
 
+print("DEBUG: preference_app/urls.py loaded")
+
 urlpatterns = [
 
     # ── Auth ─────────────────────────────────────────
@@ -37,6 +39,14 @@ urlpatterns = [
     path('gifting/',       views.gifting_view,         name='gifting'),
     path('post-purchase/', views.post_purchase_view,    name='post_purchase'),
     path('style-profile/save/', views.save_style_profile, name='save_style_profile'),
+
+    # ── Cart & Checkout ──────────────────────────────
+    path('cart/',           views.cart_view,           name='cart'),
+    path('cart/add/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
+    path('cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
+    path('checkout/',       views.checkout_view,        name='checkout'),
+    path('checkout/<int:product_id>/', views.checkout_view, name='checkout_item'),
+    path('product/<int:product_id>/', views.product_detail_view, name='product_detail_page'),
 
     # ── APIs ─────────────────────────────────────────
     path('api/view-product/<int:product_id>/', views.view_product_api, name='view_product_api'),

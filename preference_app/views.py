@@ -26,7 +26,8 @@ from django.db.models import Q
 from preference_app.forms import RegisterForm, LoginForm
 from preference_app.models import (
     SurveyQuestion, Response, PreferenceResult, SwipeSession, 
-    SwipeResponse, JewelryCatalog, ChatSession, ChatMessage, RecentlyViewed
+    SwipeResponse, JewelryCatalog, ChatSession, ChatMessage, RecentlyViewed, 
+    CartItem
 )
 from models.jewelry_scorer import score_and_recommend
 from preference_app.chat_engine import get_chatbot_response
@@ -411,6 +412,64 @@ def save_style_profile(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+# ── Cart & Checkout ──────────────────────────────────────────────────────────
+
+@login_required
+def cart_view(request):
+    """Render the standard ecommerce cart page."""
+    cart_items = CartItem.objects.filter(user=request.user).select_related('item')
+    total = sum(item.total_price for item in cart_items)
+    return render(request, "preference_app/cart.html", {
+        "cart_items": cart_items,
+        "total": total,
+    })
+
+@login_required
+def add_to_cart(request, product_id):
+    """Add a product to the user's cart."""
+    try:
+        item = JewelryCatalog.objects.get(id=product_id)
+        cart_item, created = CartItem.objects.get_or_create(user=request.user, item=item)
+        if not created:
+            cart_item.quantity += 1
+            cart_item.save()
+        messages.success(request, f"{item.name} added to cart.")
+    except JewelryCatalog.DoesNotExist:
+        messages.error(request, "Product not found.")
+    return redirect("cart")
+
+@login_required
+def remove_from_cart(request, item_id):
+    """Remove an item from the cart."""
+    CartItem.objects.filter(user=request.user, id=item_id).delete()
+    messages.success(request, "Item removed from cart.")
+    return redirect("cart")
+
+@login_required
+def checkout_view(request, product_id=None):
+    """Render the checkout page. Supports direct buy for one item or full cart."""
+    if product_id:
+        try:
+            item = JewelryCatalog.objects.get(id=product_id)
+            items = [{"item": item, "quantity": 1, "total_price": item.price}]
+            total = item.price
+        except JewelryCatalog.DoesNotExist:
+            return redirect("index")
+    else:
+        cart_items = CartItem.objects.filter(user=request.user).select_related('item')
+        if not cart_items.exists():
+            messages.warning(request, "Your cart is empty.")
+            return redirect("explore")
+        items = cart_items
+        total = sum(item.total_price for item in cart_items)
+
+    return render(request, "preference_app/checkout.html", {
+        "items": items,
+        "total": total,
+        "is_direct": product_id is not None
+    })
+
+
 # ── Static Pages ───────────────────────────────
 
 def about_view(request):
@@ -491,8 +550,26 @@ def tryon_api_view(request):
 @login_required
 def ar_tryon_view(request):
     """Render the real-time AR try-on page."""
-    items = JewelryCatalog.objects.exclude(image_url="").order_by('?')[:20]
-    return render(request, "preference_app/ar_tryon.html", {"tryon_items": items})
+    selected_id = request.GET.get('product_id')
+    items = list(JewelryCatalog.objects.exclude(image_url="").order_by('?')[:30])
+    
+    selected_item = None
+    if selected_id:
+        try:
+            selected_item = JewelryCatalog.objects.get(id=selected_id)
+            # Ensure it's at the top of the list if not already there
+            if selected_item not in items:
+                items.insert(0, selected_item)
+            else:
+                items.remove(selected_item)
+                items.insert(0, selected_item)
+        except JewelryCatalog.DoesNotExist:
+            pass
+            
+    return render(request, "preference_app/ar_tryon.html", {
+        "tryon_items": items,
+        "selected_item": selected_item
+    })
 
 
 
@@ -539,6 +616,25 @@ def product_detail_api(request, product_id):
         })
     except JewelryCatalog.DoesNotExist:
         return JsonResponse({"error": "Not found"}, status=404)
+
+def product_detail_view(request, product_id):
+    """Render the dedicated product detail page."""
+    try:
+        item = JewelryCatalog.objects.get(id=product_id)
+        # Record view if authenticated
+        if request.user.is_authenticated:
+            RecentlyViewed.objects.update_or_create(user=request.user, item=item)
+        
+        # Recommendations (similar items of same type)
+        related_items = JewelryCatalog.objects.filter(item_type=item.item_type).exclude(id=item.id).order_by('?')[:4]
+        
+        return render(request, "preference_app/product_detail.html", {
+            "item": item,
+            "related_items": related_items,
+        })
+    except JewelryCatalog.DoesNotExist:
+        messages.error(request, "Product not found.")
+        return redirect("index")
 
 
 # ── Explore ──

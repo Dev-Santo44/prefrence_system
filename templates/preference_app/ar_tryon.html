@@ -333,7 +333,9 @@
             
             <div style="display:flex; flex-direction:column; gap:12px;" id="item-list">
                 {% for item in tryon_items %}
-                <div class="asset-card" onclick="selectItem('{{ item.image_url }}', '{{ item.item_type }}', this)">
+                <div class="asset-card {% if selected_item and selected_item.id == item.id %}active{% endif %}" 
+                     id="item-{{ item.id }}"
+                     onclick="selectItem('{{ item.image_url }}', '{{ item.item_type }}', this)">
                     <img src="{{ item.image_url }}" alt="{{ item.name }}" onerror="this.src='https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=200&auto=format'">
                     <div class="asset-info">
                         <h5>{{ item.name|truncatechars:18 }}</h5>
@@ -665,7 +667,17 @@
     }
 
     // Auto-start
-    window.onload = startCamera;
+    window.onload = () => {
+        startCamera();
+        
+        {% if selected_item %}
+        // Auto-select the item
+        const selectedUrl = "{{ selected_item.image_url|safe }}";
+        const selectedType = "{{ selected_item.item_type|safe }}";
+        selectedItem = { url: selectedUrl, type: selectedType };
+        console.log("Auto-selected item:", selectedItem);
+        {% endif %}
+    };
 
 </script>
 {% endblock %}

@@ -1,0 +1,273 @@
+{% extends "preference_app/base.html" %}
+{% load static %}
+
+{% block title %}Checkout — PreferenceAI{% endblock %}
+
+{% block extra_head %}
+<style>
+  .checkout-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+
+  .checkout-header {
+    margin-bottom: 40px;
+    text-align: center;
+  }
+
+  .checkout-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+  }
+
+  .checkout-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 40px;
+  }
+
+  .checkout-form {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-stroke);
+    border-radius: var(--radius-md);
+    padding: 40px;
+  }
+
+  .checkout-section {
+    margin-bottom: 40px;
+  }
+
+  .checkout-section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--glass-stroke);
+  }
+
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .input-group {
+    margin-bottom: 20px;
+  }
+
+  .input-group label {
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .checkout-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-stroke);
+    border-radius: 12px;
+    padding: 14px 18px;
+    color: white;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .checkout-input:focus {
+    border-color: var(--accent-primary);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 15px var(--accent-glow);
+  }
+
+  /* ── Order Summary ── */
+  .order-summary {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-stroke);
+    border-radius: var(--radius-md);
+    padding: 30px;
+    height: fit-content;
+    position: sticky;
+    top: 120px;
+  }
+
+  .summary-item {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--glass-stroke);
+  }
+
+  .summary-item img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #000;
+  }
+
+  .summary-item-info h4 {
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .summary-item-info p {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+  }
+
+  .summary-total {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--glass-stroke);
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+
+  .card-input-wrapper {
+    position: relative;
+  }
+
+  .card-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.5;
+  }
+
+  @media (max-width: 900px) {
+    .checkout-grid {
+      grid-template-columns: 1fr;
+    }
+    .order-summary {
+      position: static;
+    }
+    .input-grid {
+        grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+  <div class="checkout-header">
+    <h1>Complete Your <span class="gradient-text">Acquisition</span></h1>
+    <p>Securely finalize your order and begin the journey of elegance.</p>
+  </div>
+
+  <div class="checkout-grid">
+    <div class="checkout-form">
+      <form action="{% url 'post_purchase' %}" method="GET">
+        <!-- Shipping Address -->
+        <div class="checkout-section">
+          <h2>Shipping Information</h2>
+          <div class="input-grid">
+            <div class="input-group">
+                <label>First Name</label>
+                <input type="text" class="checkout-input" placeholder="Jane" required>
+            </div>
+            <div class="input-group">
+                <label>Last Name</label>
+                <input type="text" class="checkout-input" placeholder="Doe" required>
+            </div>
+          </div>
+          <div class="input-group">
+              <label>Address Line 1</label>
+              <input type="text" class="checkout-input" placeholder="123 Luxury Lane" required>
+          </div>
+          <div class="input-grid">
+              <div class="input-group">
+                  <label>City</label>
+                  <input type="text" class="checkout-input" placeholder="Mumbai" required>
+              </div>
+              <div class="input-group">
+                  <label>Postal Code</label>
+                  <input type="text" class="checkout-input" placeholder="400001" required>
+              </div>
+          </div>
+        </div>
+
+        <!-- Payment Details -->
+        <div class="checkout-section">
+          <h2>Payment Method</h2>
+          <div class="input-group">
+              <label>Cardholder Name</label>
+              <input type="text" class="checkout-input" placeholder="Jane Doe" required>
+          </div>
+          <div class="input-group">
+              <label>Card Number</label>
+              <div class="card-input-wrapper">
+                  <input type="text" class="checkout-input" placeholder="0000 0000 0000 0000" required>
+                  <span class="card-icon">💳</span>
+              </div>
+          </div>
+          <div class="input-grid">
+              <div class="input-group">
+                  <label>Expiration (MM/YY)</label>
+                  <input type="text" class="checkout-input" placeholder="12/28" required>
+              </div>
+              <div class="input-group">
+                  <label>Security Code (CVV)</label>
+                  <input type="password" class="checkout-input" placeholder="•••" required>
+              </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-filled" style="width: 100%; padding: 18px; font-size: 1.1rem;">Authorize Payment — ₹{{ total }}</button>
+      </form>
+    </div>
+
+    <aside class="order-summary">
+      <h2 style="font-size: 1.25rem; margin-bottom: 25px;">Acquisition Summary</h2>
+      
+      <div class="summary-items">
+        {% for item_data in items %}
+        <div class="summary-item">
+            <img src="{% if is_direct %}{{ item_data.item.image_url }}{% else %}{{ item_data.item.image_url }}{% endif %}" alt="Product">
+            <div class="summary-item-info">
+                <h4>{% if is_direct %}{{ item_data.item.name }}{% else %}{{ item_data.item.name }}{% endif %}</h4>
+                <p>Qty: {{ item_data.quantity }}</p>
+                <div style="font-weight: 600; color: var(--accent-secondary); margin-top: 4px;">₹{{ item_data.total_price }}</div>
+            </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span>₹{{ total }}</span>
+      </div>
+      <div class="summary-row">
+        <span>Express Delivery</span>
+        <span style="color: var(--success);">Gifted</span>
+      </div>
+      <div class="summary-row" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--glass-stroke);">
+        <span style="font-weight: 800; font-size: 1.1rem;">Total Due</span>
+        <span class="gradient-text" style="font-weight: 800; font-size: 1.25rem;">₹{{ total }}</span>
+      </div>
+
+      <div style="margin-top: 30px; font-size: 0.8rem; color: var(--text-dim); text-align: center; line-height: 1.6;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: -2px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Secured by 256-bit AES encryption
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
