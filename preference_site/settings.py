@@ -67,8 +67,8 @@ TEMPLATES = [
 WSGI_APPLICATION = "preference_site.wsgi.application"
 
 # ── Database ──────────────────────────────────────────────────────────────────
-# DATABASE_URL takes priority (standard for Vercel + Supabase integration),
-# falls back to individual DB_* env vars for local development.
+# Supports: DATABASE_URL (if set) or individual DB_* env vars.
+# For Vercel + Supabase, use individual DB_* vars to avoid password encoding issues.
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
@@ -93,6 +93,9 @@ else:
                 "PASSWORD": os.getenv("DB_PASSWORD", ""),
                 "HOST":     os.getenv("DB_HOST", "localhost"),
                 "PORT":     os.getenv("DB_PORT", "5432"),
+                "OPTIONS":  {
+                    "sslmode": os.getenv("DB_SSLMODE", "prefer"),
+                },
             }
         }
 
