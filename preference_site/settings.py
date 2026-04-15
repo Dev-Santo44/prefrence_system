@@ -127,9 +127,9 @@ if all([GS_BUCKET_NAME, GS_PROJECT_ID, GS_CREDENTIALS_JSON]):
             },
         }
         MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/"
-        print(f"✅ GCS storage active — bucket: {GS_BUCKET_NAME}")
+        print(f"GCS storage active — bucket: {GS_BUCKET_NAME}")
     except Exception as e:
-        print(f"⚠️  GCS credentials failed to load ({e}), falling back to local storage.")
+        print(f"GCS credentials failed to load ({e}), falling back to local storage.")
         STORAGES = {
             "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
             "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},

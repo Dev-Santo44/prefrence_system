@@ -66,6 +66,7 @@ class SurveyQuestion(models.Model):
 
     question_text = models.TextField()
     category      = models.CharField(max_length=30, choices=CATEGORY_CHOICES)
+    options       = models.JSONField(null=True, blank=True) # Multiple choice options
 
     class Meta:
         db_table  = "survey_questions"

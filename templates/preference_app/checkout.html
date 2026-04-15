@@ -9,158 +9,203 @@
     max-width: 1200px;
     margin: 40px auto;
     padding: 0 20px;
+    animation: fadeIn 0.8s ease;
   }
 
   .checkout-header {
-    margin-bottom: 40px;
+    margin-bottom: 60px;
     text-align: center;
   }
 
   .checkout-header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 15px;
   }
 
   .checkout-grid {
     display: grid;
-    grid-template-columns: 1fr 400px;
+    grid-template-columns: 1fr 420px;
     gap: 40px;
   }
 
-  .checkout-form {
-    background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-stroke);
-    border-radius: var(--radius-md);
-    padding: 40px;
+  /* ── Interactive Card Visual ── */
+  .card-mockup {
+    width: 100%;
+    height: 220px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+    color: white;
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .checkout-section {
+  .card-mockup::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle at center, rgba(129, 140, 248, 0.1) 0%, transparent 70%);
+  }
+
+  .card-chip {
+    width: 45px; height: 35px;
+    background: linear-gradient(135deg, #d4af37, #fdfc47);
+    border-radius: 6px;
     margin-bottom: 40px;
   }
 
-  .checkout-section h2 {
-    font-size: 1.25rem;
+  .card-number {
+    font-size: 1.5rem;
+    letter-spacing: 0.15em;
+    font-family: 'Courier New', monospace;
     margin-bottom: 25px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--glass-stroke);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  .card-bottom {
+    display: flex;
+    justify-content: space-between;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    opacity: 0.8;
+  }
+
+  .checkout-form-panel {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 32px;
+    padding: 48px;
+  }
+
+  .checkout-section {
+    margin-bottom: 50px;
+  }
+
+  .checkout-section h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .checkout-section h2::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
   }
 
   .input-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 25px;
   }
 
   .input-group {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
   }
 
-  .input-group label {
+  .input-label {
     display: block;
-    font-size: 0.85rem;
-    margin-bottom: 8px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    margin-bottom: 10px;
     color: var(--text-dim);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
   }
 
   .checkout-input {
     width: 100%;
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--glass-stroke);
-    border-radius: 12px;
-    padding: 14px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 16px 20px;
     color: white;
-    font-size: 0.95rem;
+    font-size: 1rem;
     outline: none;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .checkout-input:focus {
     border-color: var(--accent-primary);
-    background: rgba(255, 255, 255, 0.06);
-    box-shadow: 0 0 15px var(--accent-glow);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 0 20px rgba(129, 140, 248, 0.15);
+    transform: translateY(-2px);
   }
 
-  /* ── Order Summary ── */
+  /* ── Order Summary Enhanced ── */
   .order-summary {
-    background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-stroke);
-    border-radius: var(--radius-md);
-    padding: 30px;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 32px;
+    padding: 35px;
     height: fit-content;
     position: sticky;
-    top: 120px;
+    top: 100px;
   }
 
   .summary-item {
     display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--glass-stroke);
+    gap: 20px;
+    margin-bottom: 25px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.3s ease;
   }
+  .summary-item:hover { transform: translateX(5px); }
 
   .summary-item img {
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 70px;
     object-fit: cover;
-    border-radius: 8px;
-    background: #000;
-  }
-
-  .summary-item-info h4 {
-    font-size: 0.95rem;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .summary-item-info p {
-    font-size: 0.8rem;
-    color: var(--text-dim);
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
   }
 
   .summary-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 12px;
-    font-size: 0.9rem;
+    margin-bottom: 15px;
+    color: var(--text-dim);
+    font-weight: 500;
   }
 
-  .summary-total {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid var(--glass-stroke);
-    font-size: 1.25rem;
+  .btn-pay {
+    width: 100%;
+    padding: 20px;
+    border-radius: 18px;
+    font-size: 1.1rem;
     font-weight: 800;
+    margin-top: 20px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 15px 30px -10px rgba(129, 140, 248, 0.5);
   }
 
-  .card-input-wrapper {
-    position: relative;
+  .btn-pay:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 40px -10px rgba(129, 140, 248, 0.6);
   }
 
-  .card-icon {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: 0.5;
-  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-  @media (max-width: 900px) {
-    .checkout-grid {
-      grid-template-columns: 1fr;
-    }
-    .order-summary {
-      position: static;
-    }
-    .input-grid {
-        grid-template-columns: 1fr;
-    }
+  @media (max-width: 950px) {
+    .checkout-grid { grid-template-columns: 1fr; }
+    .order-summary { position: static; }
   }
 </style>
 {% endblock %}
@@ -168,104 +213,114 @@
 {% block content %}
 <div class="checkout-container">
   <div class="checkout-header">
-    <h1>Complete Your <span class="gradient-text">Acquisition</span></h1>
-    <p>Securely finalize your order and begin the journey of elegance.</p>
+    <h1>Finalize <span class="gradient-text">Acquisition</span></h1>
+    <p style="opacity: 0.6; font-size: 1.1rem;">Secure checkout for your curated masterpieces.</p>
   </div>
 
   <div class="checkout-grid">
-    <div class="checkout-form">
+    <div class="checkout-form-panel">
+      
+      <!-- Card Mockup Visual -->
+      <div class="card-mockup" id="visual-card">
+        <div class="card-chip"></div>
+        <div class="card-number" id="v-number">•••• •••• •••• ••••</div>
+        <div class="card-bottom">
+            <div>
+                <div style="font-size: 0.5rem; opacity: 0.6; margin-bottom: 4px;">Card Holder</div>
+                <div id="v-name" style="font-weight: 600;">Full Name</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 0.5rem; opacity: 0.6; margin-bottom: 4px;">Expires</div>
+                <div id="v-expiry" style="font-weight: 600;">MM / YY</div>
+            </div>
+        </div>
+      </div>
+
       <form action="{% url 'post_purchase' %}" method="GET">
-        <!-- Shipping Address -->
+        <!-- Shipping -->
         <div class="checkout-section">
-          <h2>Shipping Information</h2>
+          <h2><span style="font-size: 1.2rem;">01</span> Delivery Address</h2>
           <div class="input-grid">
             <div class="input-group">
-                <label>First Name</label>
+                <label class="input-label">First Name</label>
                 <input type="text" class="checkout-input" placeholder="Jane" required>
             </div>
             <div class="input-group">
-                <label>Last Name</label>
+                <label class="input-label">Last Name</label>
                 <input type="text" class="checkout-input" placeholder="Doe" required>
             </div>
           </div>
           <div class="input-group">
-              <label>Address Line 1</label>
-              <input type="text" class="checkout-input" placeholder="123 Luxury Lane" required>
-          </div>
-          <div class="input-grid">
-              <div class="input-group">
-                  <label>City</label>
-                  <input type="text" class="checkout-input" placeholder="Mumbai" required>
-              </div>
-              <div class="input-group">
-                  <label>Postal Code</label>
-                  <input type="text" class="checkout-input" placeholder="400001" required>
-              </div>
+              <label class="input-label">Address</label>
+              <input type="text" class="checkout-input" placeholder="123 Elegance St." required>
           </div>
         </div>
 
-        <!-- Payment Details -->
+        <!-- Payment -->
         <div class="checkout-section">
-          <h2>Payment Method</h2>
+          <h2><span style="font-size: 1.2rem;">02</span> Payment Verification</h2>
           <div class="input-group">
-              <label>Cardholder Name</label>
-              <input type="text" class="checkout-input" placeholder="Jane Doe" required>
+              <label class="input-label">Cardholder Identity</label>
+              <input type="text" id="i-name" class="checkout-input" placeholder="Jane Doe" required 
+                     oninput="document.getElementById('v-name').textContent = this.value || 'Full Name'">
           </div>
           <div class="input-group">
-              <label>Card Number</label>
-              <div class="card-input-wrapper">
-                  <input type="text" class="checkout-input" placeholder="0000 0000 0000 0000" required>
-                  <span class="card-icon">💳</span>
-              </div>
+              <label class="input-label">Card Number</label>
+              <input type="text" id="i-number" class="checkout-input" placeholder="0000 0000 0000 0000" maxlength="19" required
+                     oninput="this.value = this.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim(); document.getElementById('v-number').textContent = this.value || '•••• •••• •••• ••••'">
           </div>
           <div class="input-grid">
               <div class="input-group">
-                  <label>Expiration (MM/YY)</label>
-                  <input type="text" class="checkout-input" placeholder="12/28" required>
+                  <label class="input-label">Expiry (MM/YY)</label>
+                  <input type="text" id="i-expiry" class="checkout-input" placeholder="12/28" maxlength="5" required
+                         oninput="this.value = this.value.replace(/[^\d]/g, '').replace(/(.{2})/, '$1/').trim(); document.getElementById('v-expiry').textContent = this.value || 'MM / YY'">
               </div>
               <div class="input-group">
-                  <label>Security Code (CVV)</label>
-                  <input type="password" class="checkout-input" placeholder="•••" required>
+                  <label class="input-label">CVC</label>
+                  <input type="password" class="checkout-input" placeholder="•••" maxlength="3" required>
               </div>
           </div>
         </div>
 
-        <button type="submit" class="btn btn-filled" style="width: 100%; padding: 18px; font-size: 1.1rem;">Authorize Payment — ₹{{ total }}</button>
+        <button type="submit" class="btn-pay shadow-hover">Authorize Acquisition • ₹{{ total }}</button>
       </form>
     </div>
 
+    <!-- Summary -->
     <aside class="order-summary">
-      <h2 style="font-size: 1.25rem; margin-bottom: 25px;">Acquisition Summary</h2>
+      <h3 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 30px;">Summary</h3>
       
       <div class="summary-items">
         {% for item_data in items %}
         <div class="summary-item">
-            <img src="{% if is_direct %}{{ item_data.item.image_url }}{% else %}{{ item_data.item.image_url }}{% endif %}" alt="Product">
-            <div class="summary-item-info">
-                <h4>{% if is_direct %}{{ item_data.item.name }}{% else %}{{ item_data.item.name }}{% endif %}</h4>
-                <p>Qty: {{ item_data.quantity }}</p>
-                <div style="font-weight: 600; color: var(--accent-secondary); margin-top: 4px;">₹{{ item_data.total_price }}</div>
+            <img src="{{ item_data.item.image_url }}" alt="Item">
+            <div style="flex: 1;">
+                <h4 style="font-size: 0.95rem; margin-bottom: 4px; font-weight: 600;">{{ item_data.item.name }}</h4>
+                <p style="font-size: 0.8rem; opacity: 0.6;">Quantity: {{ item_data.quantity }}</p>
+                <div style="color: var(--accent-secondary); font-weight: 700; margin-top: 6px;">₹{{ item_data.total_price }}</div>
             </div>
         </div>
         {% endfor %}
       </div>
 
-      <div class="summary-row">
-        <span>Subtotal</span>
-        <span>₹{{ total }}</span>
-      </div>
-      <div class="summary-row">
-        <span>Express Delivery</span>
-        <span style="color: var(--success);">Gifted</span>
-      </div>
-      <div class="summary-row" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--glass-stroke);">
-        <span style="font-weight: 800; font-size: 1.1rem;">Total Due</span>
-        <span class="gradient-text" style="font-weight: 800; font-size: 1.25rem;">₹{{ total }}</span>
+      <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.05);">
+        <div class="summary-row">
+          <span>Items Subtotal</span>
+          <span style="color: white;">₹{{ total }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Priority Shipping</span>
+          <span style="color: #34d399;">Gifted</span>
+        </div>
+        <div class="summary-row" style="margin-top: 20px; font-size: 1.3rem; font-weight: 800; color: white;">
+          <span>Total</span>
+          <span class="gradient-text">₹{{ total }}</span>
+        </div>
       </div>
 
-      <div style="margin-top: 30px; font-size: 0.8rem; color: var(--text-dim); text-align: center; line-height: 1.6;">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: -2px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Secured by 256-bit AES encryption
+      <div style="margin-top: 40px; font-size: 0.75rem; color: var(--text-dim); text-align: center; border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>SECURE END-TO-END ENCRYPTED</span>
       </div>
     </aside>
   </div>

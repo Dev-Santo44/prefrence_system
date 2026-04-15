@@ -44,25 +44,43 @@ def normalize_nlp(keyword_count: int) -> float:
 
 
 def compute_jewelry_scores(
-    likert_answers: Dict[str, List[float]],
+    likert_answers: Dict[str, List[any]],
     open_texts: Optional[List[str]] = None,
 ) -> Dict[str, float]:
     """
-    Compute Jewelry category scores.
-
-    Args:
-        likert_answers: Dict mapping category name -> list of Likert ratings (1-5).
-                        E.g. {"Style": [4, 5, 3], "Material": [2, 3, 4], ...}
-        open_texts: Optional list of open-ended text answers.
-
-    Returns:
-        Dict mapping category name -> final score (0-100).
+    Compute Jewelry category scores based on personality options.
     """
-    # Step 1: Normalize Likert scores
-    likert_scores = {
-        trait: normalize_likert(likert_answers.get(trait, []))
-        for trait in TRAITS
+    # Mappings for the 5 new personality options (Index 0-3 -> Score 0-100)
+    OPTION_MAPS = {
+        "Style":     {0: 90, 1: 20, 2: 60, 3: 40},
+        "Material":  {0: 95, 1: 75, 2: 30, 3: 50},
+        "Occasion":  {0: 90, 1: 60, 2: 15, 3: 35},
+        "Aesthetic": {0: 85, 1: 75, 2: 25, 3: 55},
+        "Budget":    {0: 95, 1: 40, 2: 60, 3: 70},
     }
+
+    final_trait_scores = {}
+    for trait in TRAITS:
+        answers = likert_answers.get(trait, [])
+        if not answers:
+            final_trait_scores[trait] = 50.0
+            continue
+            
+        trait_scores = []
+        for ans in answers:
+            # Handle categorical index (int or str int)
+            try:
+                idx = int(ans)
+                if idx in [0, 1, 2, 3]:
+                    trait_scores.append(float(OPTION_MAPS[trait].get(idx, 50)))
+                else:
+                    # Legacy Likert 1-5 support
+                    val = float(((idx - LIKERT_MIN) / (LIKERT_MAX - LIKERT_MIN)) * 100)
+                    trait_scores.append(val)
+            except (ValueError, TypeError):
+                trait_scores.append(50.0)
+        
+        final_trait_scores[trait] = round(sum(trait_scores) / len(trait_scores), 2)
 
     # Step 2: NLP analysis on open-ended text
     nlp_scores = {trait: 0.0 for trait in TRAITS}
@@ -76,7 +94,7 @@ def compute_jewelry_scores(
     final_scores = {}
     for trait in TRAITS:
         score = float(
-            LIKERT_WEIGHT * likert_scores[trait]
+            LIKERT_WEIGHT * final_trait_scores[trait]
             + NLP_WEIGHT * nlp_scores[trait]
         )
         final_scores[trait] = round(score, 2)

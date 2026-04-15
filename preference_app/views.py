@@ -62,14 +62,14 @@ def index_view(request):
     trending_qs = JewelryCatalog.objects.exclude(image_url="").order_by('-id')[:40]
     trending_items = get_unique_products(trending_qs, limit=8)
 
-    # ── Recommended for You (Based on Personality) ──
-    recommended_items = JewelryCatalog.objects.none()
+    # ── Recommended for You (Based on Detailed Personality DNA) ──
+    recommended_items = []
     if request.user.is_authenticated:
         try:
             result = request.user.preference_result
-            persona = result.jewelry_persona or ""
             
-            # Advanced Persona-to-Catalog Mapping for high-end boutique feel
+            # 1. Start with Persona base filters
+            persona = result.jewelry_persona or ""
             persona_map = {
                 "Minimalist Luxe":  {"style": "Minimalist", "material": "Gold"},
                 "Bold Statement":   {"style": "Statement", "aesthetic": "Modern"},
@@ -77,19 +77,26 @@ def index_view(request):
                 "Bohemian Spirit":  {"aesthetic": "Vintage", "item_type": "Earring"},
                 "Modern Artisan":   {"style": "Modern", "material": "Silver"}
             }
-            
             p_filters = persona_map.get(persona, {})
-            recommended_items = JewelryCatalog.objects.filter(**p_filters).exclude(image_url="").order_by('?')[:30]
             
-            # Use deduplication helper
-            recommended_items_list = get_unique_products(recommended_items, limit=4)
+            # 2. Add high-score trait boosts (e.g. if Material score is very high, prioritize it)
+            # trait_configs = [("style_score", "style", "Statement"), ("material_score", "material", "Diamond"), ...]
+            if result.material_score > 70: p_filters["material"] = "Diamond"
+            if result.style_score > 70: p_filters["style"] = "Statement"
+            if result.aesthetic_score > 70: p_filters["aesthetic"] = "Traditional"
+            if result.occasion_score > 70: p_filters["occasion"] = "Bridal"
+
+            # 3. Fetch matches
+            matches = JewelryCatalog.objects.filter(**p_filters).exclude(image_url="").order_by('?')[:30]
+            recommended_items = get_unique_products(matches, limit=4)
             
-            # Fallback for empty results
-            if not recommended_items_list:
-                fallback = JewelryCatalog.objects.exclude(image_url="").order_by('?')[:30]
-                recommended_items_list = get_unique_products(fallback, limit=4)
+            # 4. Fallback/Hybrid logic: If few matches, add items based on secondary traits or random
+            if len(recommended_items) < 4:
+                remaining = 4 - len(recommended_items)
+                secondary_trait = "material" if result.material_score > 50 else "item_type"
+                fallback = JewelryCatalog.objects.exclude(image_url="").exclude(id__in=[i.id for i in recommended_items]).order_by('?')[:30]
+                recommended_items += get_unique_products(fallback, limit=remaining)
                 
-            recommended_items = recommended_items_list
         except (PreferenceResult.DoesNotExist, Exception):
             fallback = JewelryCatalog.objects.exclude(image_url="").order_by('?')[:30]
             recommended_items = get_unique_products(fallback, limit=4)
@@ -156,7 +163,7 @@ def logout_view(request):
 def survey_view(request):
     """Render the survey page with all questions as JSON."""
     questions = list(
-        SurveyQuestion.objects.values("id", "question_text", "category")
+        SurveyQuestion.objects.values("id", "question_text", "category", "options")
         .order_by("category", "id")
     )
     return render(request, "preference_app/survey.html", {
