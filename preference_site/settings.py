@@ -5,6 +5,7 @@ Django settings for preference_site project.
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
 load_dotenv(override=True)
 
@@ -57,16 +58,25 @@ TEMPLATES = [
 WSGI_APPLICATION = "preference_site.wsgi.application"
 
 # ── Database ──────────────────────────────────────────────────────────────────
-DATABASES = {
-    "default": {
-        "ENGINE":   os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
-        "NAME":     os.getenv("DB_NAME", "postgres"),
-        "USER":     os.getenv("DB_USER", "postgres"),
-        "PASSWORD": os.getenv("DB_PASSWORD", ""),
-        "HOST":     os.getenv("DB_HOST", "localhost"),
-        "PORT":     os.getenv("DB_PORT", "5432"),
+# DATABASE_URL takes priority (standard for Vercel + Supabase integration),
+# falls back to individual DB_* env vars for local development.
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE":   os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
+            "NAME":     os.getenv("DB_NAME", "postgres"),
+            "USER":     os.getenv("DB_USER", "postgres"),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST":     os.getenv("DB_HOST", "localhost"),
+            "PORT":     os.getenv("DB_PORT", "5432"),
+        }
+    }
 
 # ── Authentication ────────────────────────────────────────────────────────────
 AUTH_USER_MODEL = "preference_app.User"
