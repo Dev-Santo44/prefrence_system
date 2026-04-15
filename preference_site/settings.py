@@ -67,16 +67,25 @@ if DATABASE_URL:
         "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
 else:
-    DATABASES = {
-        "default": {
-            "ENGINE":   os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
-            "NAME":     os.getenv("DB_NAME", "postgres"),
-            "USER":     os.getenv("DB_USER", "postgres"),
-            "PASSWORD": os.getenv("DB_PASSWORD", ""),
-            "HOST":     os.getenv("DB_HOST", "localhost"),
-            "PORT":     os.getenv("DB_PORT", "5432"),
+    _db_engine = os.getenv("DB_ENGINE", "django.db.backends.postgresql")
+    if "sqlite3" in _db_engine:
+        DATABASES = {
+            "default": {
+                "ENGINE": _db_engine,
+                "NAME": os.getenv("DB_NAME", str(BASE_DIR / "db.sqlite3")),
+            }
         }
-    }
+    else:
+        DATABASES = {
+            "default": {
+                "ENGINE":   _db_engine,
+                "NAME":     os.getenv("DB_NAME", "postgres"),
+                "USER":     os.getenv("DB_USER", "postgres"),
+                "PASSWORD": os.getenv("DB_PASSWORD", ""),
+                "HOST":     os.getenv("DB_HOST", "localhost"),
+                "PORT":     os.getenv("DB_PORT", "5432"),
+            }
+        }
 
 # ── Authentication ────────────────────────────────────────────────────────────
 AUTH_USER_MODEL = "preference_app.User"
